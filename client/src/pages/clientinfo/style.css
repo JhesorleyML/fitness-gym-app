@@ -1,0 +1,14 @@
+.client-header {
+  margin-bottom: 20px;
+  margin-top: 15px;
+}
+.new-account-form {
+  height: auto;
+  background-color: aliceblue;
+  margin: 20px;
+  padding-top: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 30px;
+  border-radius: 5px;
+}

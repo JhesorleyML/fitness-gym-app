@@ -1,0 +1,31 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.App {
+  text-align: center;
+}
+
+.App-content {
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1; /* Allows the content area to take the remaining space */
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+footer {
+  background-color: #343a40; /* Dark background */
+  color: #fff;
+  padding: 20px 0;
+}
