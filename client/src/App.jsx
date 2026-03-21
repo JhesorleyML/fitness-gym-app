@@ -1,7 +1,6 @@
 import "./App.css";
 import TopNav from "./Components/TopNav";
 import { BrowserRouter, Routes, Route } from "react-router";
-//import Home from "./pages/home/Home";
 import Login from "./pages/login/Login";
 import Dashboard from "./pages/dashboard/Dashboard";
 import { useEffect, useState } from "react";
@@ -22,45 +21,50 @@ import ClientReports from "./pages/reports/ClientReports";
 import HomePage from "./pages/home/HomePage";
 import Expenses from "./pages/expenses/Expenses";
 import ExpensesReports from "./pages/reports/ExpensesReports";
+import { useQuery } from "@tanstack/react-query";
+import { Spinner } from "react-bootstrap";
 
 function App() {
-  const defState = { username: "", id: 0, status: false };
+  const defState = { username: "", id: 0, status: false, role: "" };
   const [authState, setAuthState] = useState(defState);
-  const [loading, setLoading] = useState(true); // Add a loading state
 
-  //re-render the page if the authState Changes
-  useEffect(() => {
-    //check session storage if accessToken is present
-    //so that authState will not change when the page is refreshed
-    const token = sessionStorage.getItem("accessToken");
-    if (token) {
-      axios
-        .get("/api/auth", {
+  // Use TanStack Query for Auth Check
+  const { isLoading } = useQuery({
+    queryKey: ["auth"],
+    queryFn: async () => {
+      const token = sessionStorage.getItem("accessToken");
+      if (!token) return defState;
+      
+      try {
+        const response = await axios.get("/api/auth", {
           headers: { accessToken: token },
-        })
-        .then((response) => {
-          //console.log(response.data);
-          if (response.data.error) {
-            setAuthState(defState); //{ ...authState, status: false }
-          } else {
-            setAuthState({
-              username: response.data.user.username,
-              id: response.data.user.id,
-              status: true,
-              role: response.data.user.role,
-            });
-          }
-        })
-        .catch(() => setAuthState(defState))
-        .finally(() => setLoading(false));
-    } else {
-      setAuthState(defState);
-      setLoading(false);
-    }
-  }, []);
-  if (loading) {
-    // Show a loading spinner or placeholder while verifying authentication
-    return <div>Loading...</div>;
+        });
+        
+        if (response.data.error) return defState;
+        
+        const userData = {
+          username: response.data.user.username,
+          id: response.data.user.id,
+          status: true,
+          role: response.data.user.role,
+        };
+        setAuthState(userData);
+        return userData;
+      } catch (err) {
+        return defState;
+      }
+    },
+    retry: false,
+    refetchOnWindowFocus: true,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: "100vh" }}>
+        <Spinner animation="border" variant="primary" />
+        <span className="ms-2">Verifying session...</span>
+      </div>
+    );
   }
 
   return (
@@ -69,7 +73,6 @@ function App() {
         <AuthContext.Provider value={{ authState, setAuthState }}>
           <BrowserRouter>
             {
-              //Display Login and Register on the Top Nav if not Login
               authState.status === false ? (
                 <TopNavNotLoggedIn />
               ) : (
@@ -77,7 +80,6 @@ function App() {
               )
             }
             <Routes>
-              {/**<Route path="/" element={<Home />} /> */}
               <Route path="/" element={<HomePage />} />
               <Route
                 path="/dashboard"
@@ -88,14 +90,24 @@ function App() {
                   />
                 }
               />
-              {/**Login route is only available if not logged login */}
               <Route
                 path="/login"
                 element={<Login isLogin={authState.status} />}
               />
-              {/**Make this route only available if logged in and not logged-in*/}
-              <Route path="/register" element={<Register />} />
-              {/**Make this route only available if logged in*/}
+              <Route
+                path="/register"
+                element={
+                  <ProtectedRoute
+                    isAuth={
+                      authState.status &&
+                      (authState.role === "superadmin" ||
+                        authState.role === "admin" ||
+                        authState.role === "staff")
+                    }
+                    component={<Register />}
+                  />
+                }
+              />
               <Route
                 path="/clients"
                 element={

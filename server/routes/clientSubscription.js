@@ -9,7 +9,7 @@ const {
 } = require("../models");
 
 //get subscription  by client
-router.get("/:clientId", async (req, res) => {
+router.get("/:clientId", async (req, res, next) => {
   try {
     const { clientId } = req.params;
     const listOfClientSubscriptions = await ClientSubscription.findAll({
@@ -25,15 +25,12 @@ router.get("/:clientId", async (req, res) => {
     });
     res.status(200).json(listOfClientSubscriptions);
   } catch (error) {
-    res.status(500).send({
-      message: "An occured while retrieving client subscription records",
-      error,
-    });
+    next(error);
   }
 });
 
 //get all clients with active sessions
-router.get("/active/all", async (req, res) => {
+router.get("/active/all", async (req, res, next) => {
   try {
     const clientList = await ClientSubscription.findAll({
       attributes: ["datestart", "dateend"],
@@ -51,15 +48,12 @@ router.get("/active/all", async (req, res) => {
     });
     res.status(200).json(clientList);
   } catch (error) {
-    res.status(500).send({
-      message: "An occured while retrieving client subscription records",
-      error,
-    });
+    next(error);
   }
 });
 
 //get list client per subscription
-router.get("/subs/:subId", async (req, res) => {
+router.get("/subs/:subId", async (req, res, next) => {
   try {
     const { subId } = req.params;
     const clientList = await ClientSubscription.findAll({
@@ -72,15 +66,12 @@ router.get("/subs/:subId", async (req, res) => {
     });
     res.status(200).json(clientList);
   } catch (error) {
-    res.status(500).send({
-      message: "An occured while retrieving client subscription records",
-      error,
-    });
+    next(error);
   }
 });
 
 //create new clientssubs record
-router.post("/new", async (req, res) => {
+router.post("/new", async (req, res, next) => {
   try {
     const {
       clientId,
@@ -128,10 +119,7 @@ router.post("/new", async (req, res) => {
     //return success message
     res.status(201).send({ message: "Payment successful." });
   } catch (error) {
-    res.status(500).send({
-      message: "An error occured while adding new client subscription record",
-      error,
-    });
+    next(error);
   }
 });
 

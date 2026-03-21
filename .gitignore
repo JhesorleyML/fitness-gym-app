@@ -3,3 +3,5 @@ sys_erd
 
 server/uploads
 server/node_modules
+.env
+server/.env

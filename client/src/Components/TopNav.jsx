@@ -75,7 +75,9 @@ const TopNav = ({ userRole }) => {
                   Expenses Reports
                 </NavDropdown.Item>
               </NavDropdown>
-              {userRole === "admin" && (
+              {(userRole === "superadmin" ||
+                userRole === "admin" ||
+                userRole === "staff") && (
                 <NavDropdown title="User" id="user-nav-dropdown">
                   <NavDropdown.Item onClick={() => navigate("/register")}>
                     New User

@@ -22,7 +22,7 @@ const HomePage = () => {
     const showSlider = (type) => {
       const itemSlider = document.querySelectorAll(".carousel .list .item");
       const itemThumbnail = document.querySelectorAll(
-        ".carousel .thumbnail .item"
+        ".carousel .thumbnail .item",
       );
 
       if (itemSlider.length === 0 || itemThumbnail.length === 0) {
@@ -91,7 +91,6 @@ const HomePage = () => {
           <div className="item">
             <img src={image1} alt="Workout Equipment" />
             <div className="content">
-              <div className="author">Benglen B. Ecleo</div>
               <div className="title">Benford Fitness Gym</div>
               <div className="topic">Fitness Excellence</div>
               <div className="des">

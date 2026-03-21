@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Breadcrumb,
   Button,
@@ -9,6 +9,7 @@ import {
   Modal,
   Row,
   Table,
+  Spinner,
 } from "react-bootstrap";
 import { useNavigate } from "react-router";
 import axios from "axios";
@@ -27,6 +28,7 @@ import * as Yup from "yup";
 import AlertCustom from "../../Components/AlertCustom";
 import ClientSubs from "./ClientSubs";
 import UpdateSubsModal from "./UpdateSubsModal";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 //validation schema in yup
 const validationSchema = Yup.object().shape({
@@ -45,14 +47,11 @@ const initialValues = {
 };
 
 const Subscription = () => {
+  const queryClient = useQueryClient();
   let navigate = useNavigate();
-
-  const [listOfSubs, setListOfSubs] = useState([]);
-  const [reloadFlag, setReloadFlag] = useState(false);
 
   const [modalShow, setModalShow] = useState(false);
   const [alertShow, setAlertShow] = useState(false);
-
   const [deleteId, setDeleteId] = useState();
 
   //for clients list modal
@@ -66,55 +65,56 @@ const Subscription = () => {
   const [subsUpdateModal, setSubsUpdateModal] = useState(false);
   const [subsUpdateModalData, setSubsUpdateModalData] = useState({});
 
-  //fetch data from the database and store into an array listOfSubs
-  useEffect(() => {
-    axios.get("/api/subscriptions/").then((response) => {
-      //console.log(response.data);
-      setListOfSubs(response.data);
-    });
-  }, [reloadFlag]);
+  // Use TanStack Query
+  const { data: listOfSubs = [], isLoading, isError, error } = useQuery({
+    queryKey: ["subscriptions"],
+    queryFn: () => axios.get("/api/subscriptions/").then((res) => res.data),
+  });
+
+  // Mutation for creating new subscription
+  const createMutation = useMutation({
+    mutationFn: (newSubs) => axios.post("/api/subscriptions/new", newSubs),
+    onSuccess: (res) => {
+      alert(res.data.message);
+      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["subscriptionCategories"] }); // For NewPaymentModal
+      handleModalClose();
+    },
+  });
+
+  // Mutation for deleting subscription
+  const deleteMutation = useMutation({
+    mutationFn: (id) => axios.delete(`/api/subscriptions/${id}`),
+    onSuccess: (res) => {
+      alert(res.data.message);
+      queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
+      queryClient.invalidateQueries({ queryKey: ["subscriptionCategories"] });
+    },
+  });
 
   //handle modal show
-  const handleModalShow = () => {
-    //console.log(modalShow);
-    setModalShow(true);
-  };
+  const handleModalShow = () => setModalShow(true);
   //handle modal close
   const handleModalClose = () => setModalShow(false);
 
   //handle create new modal submit
-  const handleModalSubmit = (values, { resetForm }) => {
-    //save the date to the database:
-    axios
-      .post("http://localhost:3005/api/subscriptions/new", values)
-      .then((response) => {
-        //console.log(response.data);
-        alert(response.data.message);
-        //trigger the useEffect to refetch the data
-        setReloadFlag(!reloadFlag);
-      });
-    //modal form fields is set to initial values
-    resetForm();
-
-    //close the modal
-    handleModalClose();
-
-    //create new subs
-    //setListOfSubs((prev) => [...prev, values]);
+  const handleModalSubmit = (values, { resetForm, setSubmitting }) => {
+    createMutation.mutate(values, {
+      onSettled: () => {
+        setSubmitting(false);
+        resetForm();
+      }
+    });
   };
 
   //handle viewClientsModal
   const handleViewClientsModalShow = (data) => {
-    //console.log(data);
     const { id, category } = data;
     setClientListModalData({ id: id, category: category });
     setClientListModalShow(true);
-    //console.log(clientListModalData);
   };
 
-  const handleViewClientsModalClose = () => {
-    setClientListModalShow(false);
-  };
+  const handleViewClientsModalClose = () => setClientListModalShow(false);
 
   //handleDeleteConfirmation
   const deleteConfirmation = (id) => {
@@ -123,41 +123,22 @@ const Subscription = () => {
   };
 
   //handle alert close
-  const handleAlertClose = () => {
-    setAlertShow(false);
-  };
+  const handleAlertClose = () => setAlertShow(false);
 
   const handleDelete = (id) => {
-    console.log(id);
-    axios
-      .delete(`http://localhost:3005/api/subscriptions/${id}`)
-      .then((response) => {
-        console.log(response.data);
-        const message = `${response.data.message}`;
-        alert(message);
-        //reload
-        setReloadFlag(!reloadFlag);
-      });
+    deleteMutation.mutate(id);
     handleAlertClose();
   };
 
   //updateModal show
   const handleSubsUpdateShow = (subs) => {
-    //console.log(subs);
     setSubsUpdateModalData(subs);
     setSubsUpdateModal(true);
   };
   //updatemodal close
-  const handleSubsUpdateClose = () => {
-    setSubsUpdateModal(false);
-  };
-  //updateModal OnSubmit
-  const handleSubsUpdateModalSubmit = () => {
-    //close the modal
-    handleSubsUpdateClose();
-    //tell react to rerender table
-    setReloadFlag(!reloadFlag);
-  };
+  const handleSubsUpdateClose = () => setSubsUpdateModal(false);
+
+  if (isError) return <div className="text-center text-danger p-5">Error: {error.message}</div>;
 
   return (
     <Container>
@@ -186,8 +167,7 @@ const Subscription = () => {
         <Col md={{ span: 4, offset: 8 }}>
           <div className="d-grid mb-3">
             <Button variant="outline-success" onClick={handleModalShow}>
-              {" "}
-              Create new Subscription{" "}
+              Create new Subscription
             </Button>
           </div>
         </Col>
@@ -195,58 +175,64 @@ const Subscription = () => {
       {/**Subs Table row */}
       <Row>
         <Col>
-          <Table striped bordered hover>
-            <thead>
-              <tr>
-                <th>No.</th>
-                <th>Subscription Category</th>
-                <th>Description</th>
-                <th>Amount</th>
-                <th>Duration</th>
-                <th style={{ width: "200px" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {listOfSubs.map((subs, key) => {
-                const dur = subs.duration == 0 ? "Lifetime" : subs.duration;
-                return (
-                  <tr key={key}>
-                    <td>{key + 1}</td>
-                    <td>{subs.category}</td>
-                    <td>{subs.description}</td>
-                    <td>{subs.amount}</td>
-                    <td>{dur}</td>
-                    <td>
-                      <Button
-                        size="sm"
-                        variant="warning"
-                        title="Edit"
-                        onClick={() => handleSubsUpdateShow(subs)}
-                      >
-                        <MdEdit />
-                      </Button>{" "}
-                      <Button
-                        size="sm"
-                        variant="info"
-                        title="View Clients"
-                        onClick={() => handleViewClientsModalShow(subs)}
-                      >
-                        <MdViewAgenda />
-                      </Button>{" "}
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        title="Delete"
-                        onClick={() => deleteConfirmation(subs.id)}
-                      >
-                        <MdDelete />
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </Table>
+          {isLoading ? (
+            <div className="text-center p-5">
+              <Spinner animation="border" variant="primary" />
+            </div>
+          ) : (
+            <Table striped bordered hover responsive>
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Subscription Category</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th>Duration</th>
+                  <th style={{ width: "200px" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {listOfSubs.map((subs, key) => {
+                  const dur = subs.duration == 0 ? "Lifetime" : `${subs.duration} days`;
+                  return (
+                    <tr key={subs.id || key}>
+                      <td>{key + 1}</td>
+                      <td>{subs.category}</td>
+                      <td>{subs.description}</td>
+                      <td>{subs.amount}</td>
+                      <td>{dur}</td>
+                      <td>
+                        <Button
+                          size="sm"
+                          variant="warning"
+                          title="Edit"
+                          onClick={() => handleSubsUpdateShow(subs)}
+                        >
+                          <MdEdit />
+                        </Button>{" "}
+                        <Button
+                          size="sm"
+                          variant="info"
+                          title="View Clients"
+                          onClick={() => handleViewClientsModalShow(subs)}
+                        >
+                          <MdViewAgenda />
+                        </Button>{" "}
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          title="Delete"
+                          onClick={() => deleteConfirmation(subs.id)}
+                        >
+                          <MdDelete />
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          )}
         </Col>
       </Row>
       {/**Modal for adding new data */}
@@ -275,7 +261,6 @@ const Subscription = () => {
               isSubmitting,
             }) => (
               <Form onSubmit={handleSubmit}>
-                {/**Category */}
                 <Form.Label className="label-left">Category</Form.Label>
                 <InputGroup className="mb-3">
                   <InputGroup.Text id="category-addon">
@@ -284,8 +269,6 @@ const Subscription = () => {
                   <Form.Control
                     type="text"
                     placeholder="Enter category"
-                    aria-label="category"
-                    aria-describedby="category-addon"
                     name="category"
                     value={values.category}
                     onBlur={handleBlur}
@@ -296,7 +279,6 @@ const Subscription = () => {
                     {errors.category}
                   </Form.Control.Feedback>
                 </InputGroup>
-                {/**Description */}
                 <Form.Label className="label-left">Description</Form.Label>
                 <InputGroup className="mb-3">
                   <InputGroup.Text id="desc-addon">
@@ -305,8 +287,6 @@ const Subscription = () => {
                   <Form.Control
                     type="text"
                     placeholder="Enter description"
-                    aria-label="description"
-                    aria-describedby="description-addon"
                     name="description"
                     value={values.description}
                     onBlur={handleBlur}
@@ -317,7 +297,6 @@ const Subscription = () => {
                     {errors.description}
                   </Form.Control.Feedback>
                 </InputGroup>
-                {/**Amount */}
                 <Form.Label className="label-left">Amount</Form.Label>
                 <InputGroup className="mb-3">
                   <InputGroup.Text id="amount-addon">
@@ -326,8 +305,6 @@ const Subscription = () => {
                   <Form.Control
                     type="number"
                     placeholder="Enter amount"
-                    aria-label="amount"
-                    aria-describedby="amount-addon"
                     name="amount"
                     value={values.amount}
                     onBlur={handleBlur}
@@ -339,7 +316,6 @@ const Subscription = () => {
                     {errors.amount}
                   </Form.Control.Feedback>
                 </InputGroup>
-                {/**Duration */}
                 <Form.Label className="label-left">Duration</Form.Label>
                 <InputGroup className="mb-3">
                   <InputGroup.Text id="duration-addon">
@@ -367,16 +343,15 @@ const Subscription = () => {
                   <Button
                     variant="success"
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || createMutation.isLoading}
                   >
-                    Create
+                    {createMutation.isLoading ? "Creating..." : "Create"}
                   </Button>
                 </div>
               </Form>
             )}
           </Formik>
         </Modal.Body>
-        <Modal.Footer></Modal.Footer>
       </Modal>
       {/**Modal for updating the subscription */}
       <UpdateSubsModal
@@ -384,7 +359,6 @@ const Subscription = () => {
         validationSchema={validationSchema}
         data={subsUpdateModalData}
         handleModalClose={handleSubsUpdateClose}
-        handleModalSubmit={handleSubsUpdateModalSubmit}
       />
       {/**Modal for viewing client list */}
       <ClientSubs

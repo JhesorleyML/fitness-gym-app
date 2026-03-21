@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Formik } from "formik";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Breadcrumb,
   Button,
@@ -10,21 +10,15 @@ import {
   InputGroup,
   Modal,
   Row,
+  Spinner,
 } from "react-bootstrap";
-import {
-  MdCalendarToday,
-  MdCategory,
-  MdEditDocument,
-  MdHome,
-  MdInfo,
-  MdMoney,
-} from "react-icons/md";
+
 import { useNavigate } from "react-router";
 import * as Yup from "yup";
 import defImage from "../../assets/images/default-account.jpg";
-// import { format } from "date-fns";
 import ExpenseInfoModal from "./ExpenseInfoModal";
 import ExpenseTable from "./ExpenseTable";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const validFileExtensions = {
   image: ["jpg", "gif", "png", "jpeg", "svg", "webp"],
@@ -56,6 +50,16 @@ const validationSchema = Yup.object().shape({
   ),
 });
 
+import {
+  MdCalendarToday,
+  MdCategory,
+  MdEditDocument,
+  MdHome,
+  MdInfo,
+  MdMoney,
+  MdSearch,
+} from "react-icons/md";
+
 const initialValues = {
   title: "",
   expdate: "",
@@ -66,39 +70,64 @@ const initialValues = {
 };
 
 const Expenses = () => {
+  const queryClient = useQueryClient();
   let navigate = useNavigate();
-  const [listExpenses, setListExpenses] = useState([]);
 
-  //expense details modal
+  // Pagination and search states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit] = useState(10);
+  const [searchKey, setSearchKey] = useState("");
+
+  // Modals state
   const [expDetailsModal, setExpDetailsModal] = useState(false);
   const [expDetailsModalData, setExpDetailsModalData] = useState(null);
-
-  //new expenses modal
   const [newExpModalShow, setNewExpModalShow] = useState(false);
 
-  //image preview
+  // image preview
   const [preview, setPreview] = useState(defImage);
 
-  //reload flag
-  const [reloadFlag, setReloadFlag] = useState(false);
+  // Use TanStack Query
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["expenses", currentPage, searchKey, limit],
+    queryFn: () => 
+      axios.get(`/api/expenses?page=${currentPage}&limit=${limit}&search=${searchKey}`)
+        .then(res => res.data),
+  });
 
-  useEffect(() => {
-    axios.get("/api/expenses/").then((response) => {
-      console.log(response.data);
-      setListExpenses(response.data);
-    });
-  }, [reloadFlag]);
+  // Mutation for adding new expense
+  const mutation = useMutation({
+    mutationFn: (newExpense) => 
+      axios.post("/api/expenses/new", newExpense, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
+    onSuccess: (res) => {
+      alert(res.data.message);
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["expensesSummary"] });
+      handleNewModalClose();
+    },
+    onError: (error) => {
+      alert(error.response?.data?.message || "An error occurred");
+    }
+  });
 
-  //handles new Expense Modal
+  const handleSearch = (e) => {
+    setSearchKey(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
   const handleModalNewShow = () => setNewExpModalShow(true);
-  const handleNewModalClose = () => setNewExpModalShow(false);
+  const handleNewModalClose = () => {
+    setNewExpModalShow(false);
+    setPreview(defImage);
+  };
 
-  //handles new Expense Modal On sUbmit
-  const handleNewModalSubmit = (values, { resetForm }) => {
-    console.log("Values:", values);
-    //create a new form data
+  const handleNewModalSubmit = (values, { setSubmitting, resetForm }) => {
     const formData = new FormData();
-
     formData.append("title", values.title);
     formData.append("expdate", values.expdate);
     formData.append("category", values.category);
@@ -109,41 +138,27 @@ const Expenses = () => {
       formData.append("pic", values.image);
     }
 
-    for (let [key, value] of formData.entries()) {
-      console.log(`${key}:`, value);
-    }
-
-    //save to database
-    axios
-      .post("/api/expenses/new", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
-      .then((response) => {
-        console.log(response.data);
-        alert(response.data.message);
+    mutation.mutate(formData, {
+      onSettled: () => {
+        setSubmitting(false);
         resetForm();
-        setReloadFlag(!reloadFlag);
-        handleNewModalClose();
-      });
+      }
+    });
   };
 
-  //handle view expense details
   const handleExpViewShow = (expense) => {
-    //set data to be displayed on the modal
     setExpDetailsModalData(expense);
     setExpDetailsModal(true);
   };
   const handleExpViewClose = () => setExpDetailsModal(false);
 
-  //image file change
   const handleFileChange = (e, setFieldValue) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreview(reader.result); //set preview
+        setPreview(reader.result);
       };
-      //read preview as dataURL
       reader.readAsDataURL(file);
       setFieldValue("image", file);
     } else {
@@ -151,6 +166,11 @@ const Expenses = () => {
       setFieldValue("image", null);
     }
   };
+
+  if (isError) return <div className="text-center text-danger p-5">Error: {error.message}</div>;
+
+  const listOfExpenses = data?.expenses || [];
+  const totalPages = data?.totalPages || 0;
 
   return (
     <Container>
@@ -167,28 +187,49 @@ const Expenses = () => {
       <div className="subscription mb-3 text-center">
         <h1> Gym Expenses List </h1>
       </div>
-      {/**Create new Expenses Button */}
-      <Row>
-        <Col md={{ span: 4, offset: 8 }}>
-          <div className="d-grid mb-3">
+
+      <Row className="mb-3">
+        <Col md={4}>
+          <InputGroup>
+            <InputGroup.Text>
+              <MdSearch />
+            </InputGroup.Text>
+            <Form.Control
+              type="text"
+              placeholder="Search expenses..."
+              value={searchKey}
+              onChange={handleSearch}
+            />
+          </InputGroup>
+        </Col>
+        <Col md={{ span: 4, offset: 4 }}>
+          <div className="d-grid">
             <Button variant="outline-success" onClick={handleModalNewShow}>
-              {" "}
-              Create new Expense{" "}
+              Create new Expense
             </Button>
           </div>
         </Col>
       </Row>
-      {/**Row for the table */}
+
       <Row>
         <Col>
-          <ExpenseTable
-            listOfExpenses={listExpenses}
-            handleViewDetails={handleExpViewShow}
-            isReport={false}
-          />
+          {isLoading ? (
+            <div className="text-center p-5">
+              <Spinner animation="border" variant="primary" />
+            </div>
+          ) : (
+            <ExpenseTable
+              listOfExpenses={listOfExpenses}
+              handleViewDetails={handleExpViewShow}
+              isReport={false}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          )}
         </Col>
       </Row>
-      {/**Modal for adding new Expense Data */}
+
       <Modal show={newExpModalShow} onHide={handleNewModalClose}>
         <Modal.Header closeButton>
           <Modal.Title>Add New Expense</Modal.Title>
@@ -210,7 +251,6 @@ const Expenses = () => {
               isSubmitting,
             }) => (
               <Form onSubmit={handleSubmit}>
-                {/**Title */}
                 <Form.Label className="label-left">Expense Name</Form.Label>
                 <InputGroup className="mb-3">
                   <InputGroup.Text id="title-addon">
@@ -219,8 +259,6 @@ const Expenses = () => {
                   <Form.Control
                     type="text"
                     placeholder="Enter expense name"
-                    aria-label="title"
-                    aria-describedby="title-addon"
                     name="title"
                     value={values.title}
                     onBlur={handleBlur}
@@ -231,17 +269,15 @@ const Expenses = () => {
                     {errors.title}
                   </Form.Control.Feedback>
                 </InputGroup>
-                {/**Description */}
+
                 <Form.Label className="label-left">Description</Form.Label>
                 <InputGroup className="mb-3">
-                  <InputGroup.Text id="title-addon">
+                  <InputGroup.Text id="desc-addon">
                     <MdInfo />
                   </InputGroup.Text>
                   <Form.Control
                     type="text"
                     placeholder="Enter description"
-                    aria-label="description"
-                    aria-describedby="description-addon"
                     name="description"
                     value={values.description}
                     onBlur={handleBlur}
@@ -252,14 +288,13 @@ const Expenses = () => {
                     {errors.description}
                   </Form.Control.Feedback>
                 </InputGroup>
-                {/**Category */}
+
                 <Form.Label className="label-left">Category</Form.Label>
                 <InputGroup className="mb-3">
                   <InputGroup.Text id="duration-addon">
                     <MdCategory />
                   </InputGroup.Text>
                   <Form.Select
-                    title="Duration"
                     name="category"
                     value={values.category}
                     onBlur={handleBlur}
@@ -274,28 +309,25 @@ const Expenses = () => {
                     {errors.category}
                   </Form.Control.Feedback>
                 </InputGroup>
-                {/**Date */}
+
                 <Form.Label className="label-left">Date</Form.Label>
                 <InputGroup className="mb-3">
-                  <InputGroup.Text id="duration-addon">
+                  <InputGroup.Text id="expdate-addon">
                     <MdCalendarToday />
                   </InputGroup.Text>
                   <Form.Control
                     type="date"
                     name="expdate"
-                    aria-label="expdate"
-                    aria-describedby="expdate-addon"
                     value={values.expdate}
                     onBlur={handleBlur}
                     onChange={handleChange}
                     isInvalid={touched.expdate && !!errors.expdate}
                   />
                   <Form.Control.Feedback type="invalid">
-                    {" "}
-                    {errors.expdate}{" "}
+                    {errors.expdate}
                   </Form.Control.Feedback>
                 </InputGroup>
-                {/**Amount */}
+
                 <Form.Label className="label-left">Amount</Form.Label>
                 <InputGroup className="mb-3">
                   <InputGroup.Text id="amount-addon">
@@ -304,8 +336,6 @@ const Expenses = () => {
                   <Form.Control
                     type="number"
                     placeholder="Enter amount"
-                    aria-label="amount"
-                    aria-describedby="amount-addon"
                     name="amount"
                     value={values.amount}
                     onBlur={handleBlur}
@@ -317,7 +347,7 @@ const Expenses = () => {
                     {errors.amount}
                   </Form.Control.Feedback>
                 </InputGroup>
-                {/** FIELDS: pic */}
+
                 <Form.Label className="label-left">Upload Photo</Form.Label>
                 <InputGroup className="mb-3">
                   <Form.Control
@@ -332,6 +362,7 @@ const Expenses = () => {
                     {errors.image}
                   </Form.Control.Feedback>
                 </InputGroup>
+
                 {preview && (
                   <div className="mt-3 text-center">
                     <img
@@ -342,21 +373,22 @@ const Expenses = () => {
                     />
                   </div>
                 )}
+
                 <div className="d-grid">
                   <Button
                     variant="success"
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || mutation.isLoading}
                   >
-                    Create
+                    {mutation.isLoading ? "Creating..." : "Create"}
                   </Button>
                 </div>
               </Form>
             )}
           </Formik>
         </Modal.Body>
-        <Modal.Footer></Modal.Footer>
       </Modal>
+
       <ExpenseInfoModal
         show={expDetailsModal}
         data={expDetailsModalData}

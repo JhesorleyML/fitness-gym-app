@@ -1,67 +1,60 @@
-import { useEffect, useRef, useState } from "react";
-import { Breadcrumb, Button, Col, Container, Form, Row } from "react-bootstrap";
+import { useRef, useState, useMemo } from "react";
+import { Breadcrumb, Button, Col, Container, Form, Row, Spinner } from "react-bootstrap";
 import axios from "axios";
 import ClientTable from "../../Components/ClientTable";
 import { MdHome } from "react-icons/md";
 import { useNavigate } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 
 const ClientReports = () => {
   let navigate = useNavigate();
   const reportRef = useRef();
-  const [listOfClients, setListOfClients] = useState([]);
-  const [listOfClientsCopy, setListOfClientsCopy] = useState([]);
-  //use in filtering client list
-  const [isMember, setIsMember] = useState(false);
-  const [isActive, setIsActive] = useState(true); //default is with active sessions
-  //modify pagination during printing
   const [showAllPages, setShowAllPages] = useState(false);
 
-  //fetch data from the database
-  useEffect(() => {
-    axios.get("/api/clients/").then((response) => {
-      //console.log(response.data);
-      setListOfClients(response.data);
-      setListOfClientsCopy(response.data);
-    });
-  }, []);
+  // use in filtering client list
+  const [isMember, setIsMember] = useState(false);
+  const [isActive, setIsActive] = useState(true);
 
-  // Filter data based on the `isMember` and `isActive` state
-  useEffect(() => {
-    const filteredClients = listOfClients.filter(
+  // Use TanStack Query
+  const { data: listOfClients = [], isLoading, isError, error } = useQuery({
+    queryKey: ["allClientsReport"],
+    queryFn: () => axios.get("/api/clients/").then((res) => res.data),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Filter data using useMemo
+  const filteredClients = useMemo(() => {
+    return listOfClients.filter(
       (client) => client.isMember === isMember && client.isActive === isActive,
     );
-    console.log("Filtered Clients:", filteredClients);
-    setListOfClientsCopy(filteredClients);
-  }, [isMember, isActive, listOfClients]);
+  }, [listOfClients, isMember, isActive]);
 
   const handleSwitchChangeIsMember = () => {
-    setIsMember((prevState) => !prevState); // Toggle the isMember state
+    setIsMember((prevState) => !prevState);
   };
   const handleSwitchChangeIsActive = () => {
-    setIsActive((prevState) => !prevState); // Toggle the isActive state
+    setIsActive((prevState) => !prevState);
   };
 
   const handlePrint = () => {
-    setShowAllPages(true); // Show all pages before printing
+    setShowAllPages(true);
     setTimeout(() => {
       const printContent = reportRef.current;
       const windowPrint = window.open("", "", "width=900,height=650");
       windowPrint.document.write("<html><head><title>Print Report</title>");
-      windowPrint.document.write(
-        '<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">',
-      );
+      windowPrint.document.write('<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">');
       windowPrint.document.write("</head><body>");
-      windowPrint.document.write(
-        "<div class='text-center'><h1>BENFOR FITNESS GYM<h1></div>",
-      );
+      windowPrint.document.write("<div class='text-center'><h1>BENFOR FITNESS GYM<h1></div>");
       windowPrint.document.write(printContent.innerHTML);
       windowPrint.document.write("</body></html>");
       windowPrint.document.close();
       windowPrint.focus();
       windowPrint.print();
-      setShowAllPages(false); // Restore original pagination after printing
+      setShowAllPages(false);
     }, 500);
   };
+
+  if (isError) return <div className="text-center text-danger p-5">Error: {error.message}</div>;
 
   return (
     <Container>
@@ -75,61 +68,55 @@ const ClientReports = () => {
         <Breadcrumb.Item>Reports</Breadcrumb.Item>
         <Breadcrumb.Item href="#">Clients</Breadcrumb.Item>
       </Breadcrumb>
-      <div className="mb-3 text-center"></div>
-      <Row>
-        {/**Buttons for filter */}
-        <Col md={4} className="mb-3">
-          <Form>
-            <Form.Check // prettier-ignore
-              type="switch"
-              id="custom-switch"
-              label="With Membership Subscription"
-              checked={isMember}
-              onChange={handleSwitchChangeIsMember}
-            />
-          </Form>
+
+      <Row className="mb-3">
+        <Col md={4}>
+          <Form.Check
+            type="switch"
+            id="member-switch"
+            label="With Membership Subscription"
+            checked={isMember}
+            onChange={handleSwitchChangeIsMember}
+          />
         </Col>
-        <Col md={4} className="mb-3">
-          <Form>
-            <Form.Check // prettier-ignore
-              type="switch"
-              id="custom-switch"
-              label="With Active Sessions"
-              checked={isActive}
-              onChange={handleSwitchChangeIsActive}
-            />
-          </Form>
+        <Col md={4}>
+          <Form.Check
+            type="switch"
+            id="active-switch"
+            label="With Active Sessions"
+            checked={isActive}
+            onChange={handleSwitchChangeIsActive}
+          />
         </Col>
         <Col md={{ span: 2, offset: 2 }}>
-          <div className="d-grid">
-            <Button variant="outline-success" onClick={handlePrint}>
-              Print Report
-            </Button>
-          </div>
+          <Button variant="outline-success" className="w-100" onClick={handlePrint} disabled={isLoading}>
+            Print Report
+          </Button>
         </Col>
       </Row>
-      <Row>
-        <Col>
-          <div ref={reportRef} className="mt-3">
-            <div className="report-title text-center">
-              <h3>
-                {isMember
-                  ? `List of Gym Clients with Memberships`
-                  : `List of Gym Clients without Memberships`}
-              </h3>
-            </div>
-            <div className="mb-2">
-              <p>No of Records: {listOfClientsCopy.length}</p>
-            </div>
-            <ClientTable
-              listOfClients={listOfClientsCopy}
-              isReport={true}
-              showAllPages={showAllPages}
-              isSubList={isActive}
-            />
+
+      {isLoading ? (
+        <div className="text-center p-5"><Spinner animation="border" variant="primary" /></div>
+      ) : (
+        <div ref={reportRef} className="mt-3">
+          <div className="report-title text-center">
+            <h3>
+              {isMember
+                ? `List of Gym Clients with Memberships`
+                : `List of Gym Clients without Memberships`}
+            </h3>
           </div>
-        </Col>
-      </Row>
+          <div className="mb-2 fw-bold">
+            No of Records: {filteredClients.length}
+          </div>
+          <ClientTable
+            listOfClients={filteredClients}
+            isReport={true}
+            showAllPages={showAllPages}
+            isSubList={isActive}
+          />
+        </div>
+      )}
     </Container>
   );
 };

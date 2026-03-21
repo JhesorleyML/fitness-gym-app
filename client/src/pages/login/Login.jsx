@@ -1,4 +1,4 @@
-import { Button, Col, Container, Form, InputGroup, Row } from "react-bootstrap";
+import { Button, Col, Container, Form, InputGroup, Row, Spinner } from "react-bootstrap";
 import { MdPerson, MdLock } from "react-icons/md";
 import "./style.css";
 import { useContext, useEffect, useState } from "react";
@@ -6,43 +6,53 @@ import { AuthContext } from "../../helpers/AuthContext";
 import { useNavigate } from "react-router";
 import axios from "axios";
 import PropTypes from "prop-types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const Login = ({ isLogin }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const { setAuthState } = useContext(AuthContext);
-
+  const queryClient = useQueryClient();
   let navigate = useNavigate();
-  //check if already login
+
+  // check if already logged in
   useEffect(() => {
     if (isLogin) {
       navigate("/");
     }
   }, [isLogin, navigate]);
 
-  const onSubmit = () => {
-    const data = { username: username, password: password };
-    //console.log(data);
-    axios.post("/api/auth/login", data).then((response) => {
-      console.log(response.data);
-      if (response.data.error) alert(response.data.error);
-      else {
+  const loginMutation = useMutation({
+    mutationFn: (credentials) => axios.post("/api/auth/login", credentials),
+    onSuccess: (response) => {
+      if (response.data.error) {
+        alert(response.data.error);
+      } else {
         sessionStorage.setItem("accessToken", response.data.token);
         alert(response.data.message);
-        setAuthState({
+        
+        const userData = {
           username: response.data.user.username,
           id: response.data.user.id,
           status: true,
           role: response.data.user.role,
-        });
-
+        };
+        
+        setAuthState(userData);
+        // Manually update the 'auth' query cache
+        queryClient.setQueryData(["auth"], userData);
+        
         navigate(`/dashboard`);
       }
-    });
-  };
+    },
+    onError: (error) => {
+      alert(error.response?.data?.message || "Login failed. Please try again.");
+    }
+  });
 
-  Login.propTypes = {
-    isLogin: PropTypes.bool,
+  const onSubmit = (e) => {
+    e.preventDefault();
+    loginMutation.mutate({ username, password });
   };
 
   return (
@@ -54,48 +64,55 @@ const Login = ({ isLogin }) => {
             style={{ backgroundColor: "aliceblue", minWidth: "300px" }}
           >
             <h3 className="text-center mb-4">Log In</h3>
-            <Form>
+            <Form onSubmit={onSubmit}>
               <Form.Label className="label-left">Username</Form.Label>
               <InputGroup className="mb-3">
-                <InputGroup.Text id="account-addon">
+                <InputGroup.Text className="bg-primary text-white">
                   <MdPerson />
                 </InputGroup.Text>
                 <Form.Control
                   type="text"
                   placeholder="Username"
-                  aria-label="username"
-                  aria-describedby="username-addon"
                   name="username"
+                  required
+                  value={username}
                   onChange={(event) => setUsername(event.target.value)}
                 />
-                <Form.Control.Feedback type="invalid">
-                  {/*errors.account*/}
-                </Form.Control.Feedback>
               </InputGroup>
+
               <Form.Label className="label-left">Password</Form.Label>
               <InputGroup className="mb-3">
-                <InputGroup.Text id="password-addon">
+                <InputGroup.Text className="bg-primary text-white">
                   <MdLock />
                 </InputGroup.Text>
                 <Form.Control
                   type="password"
-                  aria-label="Enter Password"
-                  aria-describedby="password-addon"
+                  placeholder="Password"
                   name="password"
+                  required
+                  value={password}
                   onChange={(event) => setPassword(event.target.value)}
                 />
-                <Form.Control.Feedback type="invalid">
-                  {/*errors.amount*/}
-                </Form.Control.Feedback>
               </InputGroup>
+
               <div className="d-grid">
-                <Button variant="primary" onClick={onSubmit}>
-                  {" "}
-                  Login
+                <Button 
+                  variant="primary" 
+                  type="submit" 
+                  disabled={loginMutation.isLoading}
+                >
+                  {loginMutation.isLoading ? (
+                    <>
+                      <Spinner animation="border" size="sm" className="me-2" />
+                      Logging in...
+                    </>
+                  ) : (
+                    "Login"
+                  )}
                 </Button>
               </div>
-              <div className="regLink">
-                <p>No account yet? Please contact the administrator.</p>
+              <div className="regLink mt-3">
+                <p className="small text-muted mb-0">No account yet? Please contact the administrator.</p>
               </div>
             </Form>
           </div>
@@ -103,6 +120,10 @@ const Login = ({ isLogin }) => {
       </Row>
     </Container>
   );
+};
+
+Login.propTypes = {
+  isLogin: PropTypes.bool,
 };
 
 export default Login;

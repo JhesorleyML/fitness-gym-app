@@ -1,49 +1,32 @@
-import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { Button, Form, InputGroup, Modal } from "react-bootstrap";
 import "./style.css";
 import { format } from "date-fns";
 
 const ClientInfoModal = ({ data, handleClose, show }) => {
-  const [firstname, setFirstname] = useState("");
-  const [lastname, setLastname] = useState("");
-  const [middlename, setMiddlename] = useState("");
-  const [address, setAddress] = useState("");
-  const [contact, setContact] = useState("");
-  const [bdate, setBdate] = useState("");
-  const [sex, setSex] = useState("");
-  const [pic, setPic] = useState("");
-  const [membership, setMembership] = useState("Non-Member");
-  const [emName, setEmName] = useState("");
-  const [emContact, setEmContact] = useState("");
+  // Extract and format data directly from props
+  const firstname = data?.firstname || "";
+  const lastname = data?.lastname || "";
+  const middlename = data?.middlename || "";
+  const address = data?.address || "";
+  const contact = data?.contactno || "";
+  const sex = data?.sex || "";
+  const pic = data?.pic || "";
+  const membership = data?.isMember ? "Gym Member" : "Non-Member";
+  const emName = data?.EmergencyContact?.name || "N/A";
+  const emContact = data?.EmergencyContact?.contact || "N/A";
 
-  //console.log(data.lastname);
-
-  useEffect(() => {
-    if (data) {
-      //format bdate
-      console.log(data);
-      const formattedDate = format(new Date(data.bdate), "MMMM dd, yyyy");
-      if (data.isMember) {
-        setMembership("Gym Member");
-      } else {
-        setMembership("Non-Member");
-      }
-      setFirstname(data.firstname || "");
-      setLastname(data.lastname || "");
-      setMiddlename(data.middlename || "");
-      setAddress(data.address || "");
-      setContact(data.contactno || "");
-      setBdate(formattedDate || "");
-      setSex(data.sex || "");
-      setPic(data.pic || "");
-      setEmName(data.EmergencyContact.name || "");
-      setEmContact(data.EmergencyContact.contact || "");
+  let bdate = "N/A";
+  if (data?.bdate) {
+    try {
+      bdate = format(new Date(data.bdate), "MMMM dd, yyyy");
+    } catch (error) {
+      console.error("Invalid birthdate:", data.bdate);
     }
-  }, [data]);
+  }
 
   return (
-    <Modal show={show} onHide={handleClose} backdrop="static" keyboard="false">
+    <Modal show={show} onHide={handleClose} backdrop="static" keyboard={false}>
       <Modal.Header closeButton>
         <Modal.Title> Client Information </Modal.Title>
       </Modal.Header>
@@ -51,161 +34,93 @@ const ClientInfoModal = ({ data, handleClose, show }) => {
         <Form>
           <div className="text-center mb-3">
             <img
-              src={pic}
+              src={pic || "/default-account.jpg"}
               alt="Profile"
-              className="rounded-circle"
+              className="rounded-circle border"
               width="150"
               height="150"
+              style={{ objectFit: "cover" }}
             />
           </div>
-          <div className="mb-2 text-primary">Client Information Details</div>
+          <div className="mb-2 text-primary fw-bold">Client Information Details</div>
+          
           <InputGroup className="mb-2">
-            <InputGroup.Text
-              id="basic-addon1"
-              className="input-group-text-uniform d-flex justify-content-end bg-success text-white"
-            >
+            <InputGroup.Text className="input-group-text-uniform bg-success text-white" style={{ width: "120px" }}>
               Firstname
             </InputGroup.Text>
-            <Form.Control
-              type="text"
-              readOnly
-              value={firstname}
-              onChange={(e) => setFirstname(e.target.value)}
-            />
+            <Form.Control type="text" readOnly value={firstname} />
           </InputGroup>
+
           <InputGroup className="mb-2">
-            <InputGroup.Text
-              id="basic-addon2"
-              className="input-group-text-uniform d-flex justify-content-end bg-success text-white"
-            >
+            <InputGroup.Text className="input-group-text-uniform bg-success text-white" style={{ width: "120px" }}>
               Middlename
             </InputGroup.Text>
-            <Form.Control
-              type="text"
-              readOnly
-              value={middlename}
-              onChange={(e) => setMiddlename(e.target.value)}
-            />
+            <Form.Control type="text" readOnly value={middlename} />
           </InputGroup>
+
           <InputGroup className="mb-2">
-            <InputGroup.Text
-              id="basic-addon3"
-              className="input-group-text-uniform d-flex justify-content-end bg-success text-white"
-            >
+            <InputGroup.Text className="input-group-text-uniform bg-success text-white" style={{ width: "120px" }}>
               Lastname
             </InputGroup.Text>
-            <Form.Control
-              type="text"
-              readOnly
-              value={lastname}
-              onChange={(e) => setLastname(e.target.value)}
-            />
+            <Form.Control type="text" readOnly value={lastname} />
           </InputGroup>
+
           <InputGroup className="mb-2">
-            <InputGroup.Text
-              id="basic-addon8"
-              className="input-group-text-uniform d-flex justify-content-end bg-success text-white"
-            >
+            <InputGroup.Text className="input-group-text-uniform bg-success text-white" style={{ width: "120px" }}>
               Sex
             </InputGroup.Text>
-            <Form.Control
-              type="text"
-              readOnly
-              value={sex}
-              onChange={(e) => setSex(e.target.value)}
-            />
+            <Form.Control type="text" readOnly value={sex} />
           </InputGroup>
+
           <InputGroup className="mb-2">
-            <InputGroup.Text
-              id="basic-addon4"
-              className="input-group-text-uniform d-flex justify-content-end bg-success text-white"
-            >
+            <InputGroup.Text className="input-group-text-uniform bg-success text-white" style={{ width: "120px" }}>
               Address
             </InputGroup.Text>
-            <Form.Control
-              type="text"
-              readOnly
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-            />
+            <Form.Control type="text" readOnly value={address} />
           </InputGroup>
+
           <InputGroup className="mb-2">
-            <InputGroup.Text
-              id="basic-addon5"
-              className="input-group-text-uniform d-flex justify-content-end bg-success text-white"
-            >
+            <InputGroup.Text className="input-group-text-uniform bg-success text-white" style={{ width: "120px" }}>
               Birthdate
             </InputGroup.Text>
-            <Form.Control
-              type="text"
-              readOnly
-              value={bdate}
-              onChange={(e) => setBdate(e.target.value)}
-            />
+            <Form.Control type="text" readOnly value={bdate} />
           </InputGroup>
+
           <InputGroup className="mb-2">
-            <InputGroup.Text
-              id="basic-addon6"
-              className="input-group-text-uniform d-flex justify-content-end bg-success text-white"
-            >
+            <InputGroup.Text className="input-group-text-uniform bg-success text-white" style={{ width: "120px" }}>
               Phone No.
             </InputGroup.Text>
-            <Form.Control
-              type="text"
-              readOnly
-              value={contact}
-              onChange={(e) => setContact(e.target.value)}
-            />
+            <Form.Control type="text" readOnly value={contact} />
           </InputGroup>
+
           <InputGroup className="mb-3">
-            <InputGroup.Text
-              id="basic-addon7"
-              className="input-group-text-uniform d-flex justify-content-end bg-success text-white"
-            >
+            <InputGroup.Text className="input-group-text-uniform bg-success text-white" style={{ width: "120px" }}>
               Status
             </InputGroup.Text>
-            <Form.Control
-              type="text"
-              readOnly
-              value={membership}
-              onChange={(e) => setMembership(e.target.value)}
-            />
+            <Form.Control type="text" readOnly value={membership} />
           </InputGroup>
-          <div className="mb-2 text-primary">
-            In case of Emergency Contact Details
+
+          <div className="mb-2 text-primary fw-bold mt-4">
+            Emergency Contact Details
           </div>
+          
           <InputGroup className="mb-2">
-            <InputGroup.Text
-              id="basic-addon7"
-              className="input-group-text-uniform d-flex justify-content-end bg-warning text-white"
-            >
+            <InputGroup.Text className="input-group-text-uniform bg-warning text-dark" style={{ width: "120px" }}>
               Name
             </InputGroup.Text>
-            <Form.Control
-              type="text"
-              readOnly
-              value={emName}
-              onChange={(e) => setEmName(e.target.value)}
-            />
+            <Form.Control type="text" readOnly value={emName} />
           </InputGroup>
+
           <InputGroup className="mb-2">
-            <InputGroup.Text
-              id="basic-addon7"
-              className="input-group-text-uniform d-flex justify-content-end bg-warning text-white"
-            >
+            <InputGroup.Text className="input-group-text-uniform bg-warning text-dark" style={{ width: "120px" }}>
               Contact No
             </InputGroup.Text>
-            <Form.Control
-              type="text"
-              readOnly
-              value={emContact}
-              onChange={(e) => setEmContact(e.target.value)}
-            />
+            <Form.Control type="text" readOnly value={emContact} />
           </InputGroup>
         </Form>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="danger" onClick={handleClose}>
+        <Button variant="secondary" onClick={handleClose}>
           Close
         </Button>
       </Modal.Footer>

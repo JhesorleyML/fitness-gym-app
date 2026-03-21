@@ -10,7 +10,7 @@ const {
 } = require("../models");
 
 //get the list of clients
-router.get("/", async (req, res) => {
+router.get("/", async (req, res, next) => {
   try {
     const clientList = await ClientInfo.findAll({
       attributes: [
@@ -84,30 +84,25 @@ router.get("/", async (req, res) => {
     console.log(updatedClientList);
     res.status(200).json(updatedClientList);
   } catch (error) {
-    res.status(500).send({
-      message:
-        "An error occured while retrieving client data from the database",
-      error,
-    });
+    next(error);
   }
 });
 
 //create new client
-router.post("/new", (req, res) => {
+router.post("/new", (req, res, next) => {
   console.log(req);
   const upload = req.upload.single("pic");
   console.log(upload);
   upload(req, res, async (err) => {
+    if (err) {
+      return next(err);
+    }
     const clientData = {
       ...req.body,
       pic: req.file ? req.file.path : `default.jpg`, // Use uploaded file or default
     };
     console.log(clientData);
     // console.log(req.file);
-    if (err) {
-      console.log("Multer error:".err);
-      return res.status(400).json({ message: "Failed to upload image" });
-    }
     try {
       const {
         firstname,
@@ -146,16 +141,13 @@ router.post("/new", (req, res) => {
         message: "New client information successfully created",
       });
     } catch (error) {
-      res.status(500).send({
-        message: "An error occured while adding client data to the database ",
-        error,
-      });
+      next(error);
     }
   });
 });
 
 //update client info
-router.put("/update/:id", async (req, res) => {
+router.put("/update/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
@@ -196,10 +188,7 @@ router.put("/update/:id", async (req, res) => {
       .status(201)
       .send({ message: `Successfully updated ${emergencyContact}` });
   } catch (error) {
-    res.status(500).send({
-      message: "An error occured while updating client data from the database",
-      error,
-    });
+    next(error);
   }
 });
 

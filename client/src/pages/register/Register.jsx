@@ -21,6 +21,8 @@ import { Formik } from "formik";
 import axios from "axios";
 import "./style.css";
 import { useNavigate } from "react-router";
+import { AuthContext } from "../../helpers/AuthContext";
+import { useContext } from "react";
 
 const validationSchema = Yup.object().shape({
   //enter the validation/constraints of the fields
@@ -43,15 +45,51 @@ const validationSchema = Yup.object().shape({
 
 const Register = () => {
   let navigate = useNavigate();
+  const { authState } = useContext(AuthContext);
+
   //validation schema using yup
   const handleSubmit = (values, { resetForm }) => {
-    console.log(values);
+    const token = sessionStorage.getItem("accessToken");
     //save the data to the database
-    axios.post("/api/auth/new", values).then((response) => {
-      console.log(response.data.message);
-      alert(response.data.message);
-    });
-    resetForm();
+    axios
+      .post("/api/auth/new", values, {
+        headers: { accessToken: token },
+      })
+      .then((response) => {
+        if (response.data.error) {
+          alert(response.data.error);
+        } else {
+          alert(response.data.message);
+          resetForm();
+        }
+      })
+      .catch((error) => {
+        alert(
+          error.response?.data?.error || "An error occurred during registration"
+        );
+      });
+  };
+
+  const getRoleOptions = () => {
+    const userRole = authState.role;
+    const options = [];
+    if (userRole === "superadmin") {
+      options.push(
+        <option key="admin" value="admin">Admin</option>,
+        <option key="staff" value="staff">Staff</option>,
+        <option key="user" value="user">User</option>
+      );
+    } else if (userRole === "admin") {
+      options.push(
+        <option key="staff" value="staff">Staff</option>,
+        <option key="user" value="user">User</option>
+      );
+    } else if (userRole === "staff") {
+      options.push(
+        <option key="user" value="user">User</option>
+      );
+    }
+    return options;
   };
 
   return (
@@ -220,12 +258,20 @@ const Register = () => {
                     <InputGroup.Text id="role-addon">
                       <MdAdminPanelSettings />
                     </InputGroup.Text>
-                    <Form.Select title="role" name="role">
-                      <option disabled>-Select Role-</option>
-                      <option value={`user`}>User</option>
-                      <option value={`admin`}>Admin</option>
+                    <Form.Select
+                      title="role"
+                      name="role"
+                      value={values.role}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      isInvalid={touched.role && !!errors.role}
+                    >
+                      <option value="" disabled>-Select Role-</option>
+                      {getRoleOptions()}
                     </Form.Select>
-                    <Form.Control.Feedback type="invalid"></Form.Control.Feedback>
+                    <Form.Control.Feedback type="invalid">
+                      {errors.role}
+                    </Form.Control.Feedback>
                   </InputGroup>
                   {/* Submit Button */}
                   <div className="d-grid">

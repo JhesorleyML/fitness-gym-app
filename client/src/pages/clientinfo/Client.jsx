@@ -1,55 +1,53 @@
-import { Breadcrumb, Col, Container, Form, Row } from "react-bootstrap";
+import { Breadcrumb, Col, Container, Form, Row, Spinner } from "react-bootstrap";
 import ClientTable from "../../Components/ClientTable";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import axios from "axios";
 import "./style.css";
 import ClientInfoModal from "../../Components/ClientInfoModal";
 import { MdHome } from "react-icons/md";
 import { useNavigate } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 
 const Client = () => {
   let navigate = useNavigate();
-  const [listOfClients, setListOfClients] = useState([]);
-  const [listOfClientsCopy, setListOfClientsCopy] = useState([]);
   const [modalShow, setModalShow] = useState(false);
   const [modalData, setModalData] = useState(null);
 
-  //use in filtering client list
+  // use in filtering client list
   const [isMember, setIsMember] = useState(false);
   const [isActive, setIsActive] = useState(true);
 
-  useEffect(() => {
-    axios.get("/api/clients/").then((response) => {
-      console.log(response.data);
-      setListOfClients(response.data);
-      setListOfClientsCopy(response.data);
-    });
-  }, []);
+  // Use TanStack Query
+  const { data: listOfClients = [], isLoading, isError, error } = useQuery({
+    queryKey: ["clients"],
+    queryFn: () => axios.get("/api/clients/").then((res) => res.data),
+  });
+
+  // Filter data using useMemo (Performance Optimization)
+  const filteredClients = useMemo(() => {
+    return listOfClients.filter(
+      (client) => client.isMember === isMember && client.isActive === isActive,
+    );
+  }, [listOfClients, isMember, isActive]);
 
   const viewClientDetails = (client) => {
-    //format the data to be passed to the modal
     setModalData(client);
     setModalShow(true);
   };
+
   const handleModalClose = () => {
     setModalShow(false);
   };
 
-  // Filter data based on the `isMember` state
-  useEffect(() => {
-    const filteredClients = listOfClients.filter(
-      (client) => client.isMember === isMember && client.isActive === isActive,
-    );
-    //console.log("Filtered Clients:", filteredClients);
-    setListOfClientsCopy(filteredClients);
-  }, [isMember, isActive, listOfClients]);
-
   const handleSwitchChangeIsMember = () => {
-    setIsMember((prevState) => !prevState); // Toggle the isMember state
+    setIsMember((prevState) => !prevState);
   };
+
   const handleSwitchChangeIsActive = () => {
-    setIsActive((prevState) => !prevState); // Toggle the isMember state
+    setIsActive((prevState) => !prevState);
   };
+
+  if (isError) return <div className="text-center text-danger p-5">Error: {error.message}</div>;
 
   return (
     <Container>
@@ -69,9 +67,9 @@ const Client = () => {
       <Row>
         <Col md={4} className="mb-3">
           <Form>
-            <Form.Check // prettier-ignore
+            <Form.Check
               type="switch"
-              id="custom-switch"
+              id="member-switch"
               label="With Membership Subscription"
               checked={isMember}
               onChange={handleSwitchChangeIsMember}
@@ -80,9 +78,9 @@ const Client = () => {
         </Col>
         <Col md={4} className="mb-3">
           <Form>
-            <Form.Check // prettier-ignore
+            <Form.Check
               type="switch"
-              id="custom-switch"
+              id="active-switch"
               label="With Active Sessions"
               checked={isActive}
               onChange={handleSwitchChangeIsActive}
@@ -90,19 +88,25 @@ const Client = () => {
           </Form>
         </Col>
       </Row>
-      <ClientTable
-        listOfClients={listOfClientsCopy}
-        isReport={false}
-        handleViewDetails={viewClientDetails}
-        showAllPages={false}
-        isSubList={isActive}
-      />
+
+      {isLoading ? (
+        <div className="text-center p-5">
+          <Spinner animation="border" variant="primary" />
+        </div>
+      ) : (
+        <ClientTable
+          listOfClients={filteredClients}
+          isReport={false}
+          handleViewDetails={viewClientDetails}
+          showAllPages={false}
+          isSubList={isActive}
+        />
+      )}
+
       <ClientInfoModal
         show={modalShow}
         handleClose={handleModalClose}
         data={modalData}
-        backdrop="static"
-        keyboard={false}
       />
     </Container>
   );

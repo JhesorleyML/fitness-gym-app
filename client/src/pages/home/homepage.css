@@ -73,7 +73,7 @@
 }
 .thumbnail .item {
   width: 150px;
-  height: 220px;
+  height: 150px;
   flex-shrink: 0;
   position: relative;
 }
@@ -91,6 +91,12 @@
 }
 .thumbnail .item .content .title {
   font-weight: bold;
+  color: orange;
+}
+
+.thumbnail .item .content .des {
+  font-size: 12px;
+  color: #eee;
 }
 
 .arrows {

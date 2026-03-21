@@ -1,13 +1,38 @@
 const express = require("express");
 const router = express.Router();
+const { Op } = require("sequelize");
+const sequelize = require("sequelize");
 
 const { Expense, User } = require("../models");
 
-//find all
-router.get("/", async (req, res) => {
+// Get daily expense totals for the dashboard chart
+router.get("/summary", async (req, res, next) => {
   try {
-    const expenseList = await Expense.findAll({
+    const dailyTotals = await Expense.findAll({
       attributes: [
+        [sequelize.fn("DATE", sequelize.col("expdate")), "date"],
+        [sequelize.fn("SUM", sequelize.col("amount")), "totalAmount"],
+      ],
+      group: [sequelize.fn("DATE", sequelize.col("expdate"))],
+      order: [[sequelize.fn("DATE", sequelize.col("expdate")), "ASC"]],
+    });
+    res.status(200).json(dailyTotals);
+  } catch (error) {
+    next(error);
+  }
+});
+
+//find all with pagination and search
+router.get("/", async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || "";
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Expense.findAndCountAll({
+      attributes: [
+        "id",
         "title",
         "expdate",
         "description",
@@ -15,28 +40,43 @@ router.get("/", async (req, res) => {
         "category",
         "image",
       ],
+      where: search ? {
+        [Op.or]: [
+          { title: { [Op.like]: `%${search}%` } },
+          { description: { [Op.like]: `%${search}%` } },
+          { category: { [Op.like]: `%${search}%` } },
+        ]
+      } : null,
       include: { model: User, attributes: ["fullname"] },
       order: [["expdate", "DESC"]],
+      limit: limit,
+      offset: offset,
     });
+
     //get the image attached
     const host = req.get("host");
     const protocol = req.protocol;
-    const updatedExpensList = expenseList.map((expense) => {
-      if (expense.image) {
-        expense.image = `${protocol}://${host}/uploads/${expense.image}`;
+    const updatedExpenses = rows.map((expense) => {
+      const expenseObj = expense.toJSON();
+      if (expenseObj.image) {
+        expenseObj.image = `${protocol}://${host}/uploads/${expenseObj.image}`;
       }
-      return expense;
+      return expenseObj;
     });
-    res.status(200).json(updatedExpensList);
+
+    res.status(200).json({
+      totalItems: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      expenses: updatedExpenses,
+    });
   } catch (error) {
-    res.status(500).send({
-      message: "An error occured while fetching expense data from the database",
-    });
+    next(error);
   }
 });
 
 //find all by id
-router.get("/:userId", async (req, res) => {
+router.get("/:userId", async (req, res, next) => {
   try {
     const { userId } = req.params;
     const expenseList = await Expense.findAll({
@@ -54,28 +94,25 @@ router.get("/:userId", async (req, res) => {
     });
     res.status(200).json(expenseList);
   } catch (error) {
-    res.status(500).send({
-      message: "An error occured while fetching expense data from the database",
-    });
+    next(error);
   }
 });
 
 //add new expense
-router.post("/new", (req, res) => {
+router.post("/new", (req, res, next) => {
   console.log(req);
   const upload = req.upload.single("pic");
   console.log("upload:", upload);
   upload(req, res, async (err) => {
+    if (err) {
+      return next(err);
+    }
     const expenseData = {
       ...req.body,
       pic: req.file ? req.file.path : "default.jpg",
     };
     console.log("req.file", req.file);
     console.log(expenseData);
-    if (err) {
-      console.log("Multer Error:".err);
-      return res.status(400).json({ message: "Failed to upload image" });
-    }
     //insert to database
     try {
       const { title, expdate, amount, category, description } = expenseData;
@@ -90,11 +127,7 @@ router.post("/new", (req, res) => {
       });
       res.status(201).send({ message: "New expense successfully added" });
     } catch (error) {
-      res.status(500).send({
-        message:
-          "An error occured while adding new expense data to the database",
-        error,
-      });
+      next(error);
     }
   });
 });

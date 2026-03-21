@@ -1,37 +1,24 @@
 import { Button, Form, InputGroup, Modal } from "react-bootstrap";
 import PropTypes from "prop-types";
-import { useEffect, useState } from "react";
 import { format } from "date-fns";
 
 const PaymentInfoModal = ({ show, handleClose, data }) => {
-  const [fname, setfname] = useState("");
-  const [amount, setAmount] = useState(0);
-  const [pDate, setPDate] = useState("");
-  const [subs, setSubs] = useState("");
-  //console.log(data);
-
-  useEffect(() => {
-    if (data) {
-      //console.log(data.paymentdate);
-      try {
-        const formattedDate = format(
-          new Date(data.paymentdate),
-          "MMMM dd, yyyy"
-        );
-        setSubs(data.ClientSubscription.Subscription.category);
-        setPDate(formattedDate || "");
-      } catch (error) {
-        console.log(error);
-        setPDate("");
-      }
-      setfname(data.fullname || "");
-
-      setAmount(data.amount || 0);
+  // Extract and format data directly from props
+  const fname = data?.fullname || "";
+  const amount = data?.amount ? parseFloat(data.amount).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "0.00";
+  const subs = data?.ClientSubscription?.Subscription?.category || "N/A";
+  
+  let pDate = "N/A";
+  if (data?.paymentdate) {
+    try {
+      pDate = format(new Date(data.paymentdate), "MMMM dd, yyyy");
+    } catch (error) {
+      console.error("Invalid date:", data.paymentdate);
     }
-  }, [data]);
+  }
 
   return (
-    <Modal show={show} onHide={handleClose} backdrop="static" keyboard="false">
+    <Modal show={show} onHide={handleClose} backdrop="static" keyboard={false}>
       <Modal.Header closeButton>
         <Modal.Title>Payment Details</Modal.Title>
       </Modal.Header>
@@ -39,59 +26,39 @@ const PaymentInfoModal = ({ show, handleClose, data }) => {
         <Form>
           <InputGroup className="mb-2">
             <InputGroup.Text
-              id="basic-addon1"
-              className="input-group-text-uniform d-flex justify-content-end bg-success text-white"
+              className="input-group-text-uniform bg-success text-white"
+              style={{ width: "130px" }}
             >
               Firstname
             </InputGroup.Text>
-            <Form.Control
-              type="text"
-              readOnly
-              value={fname}
-              onChange={(e) => setfname(e.target.value)}
-            />
+            <Form.Control type="text" readOnly value={fname} />
           </InputGroup>
           <InputGroup className="mb-2">
             <InputGroup.Text
-              id="basic-addon1"
-              className="input-group-text-uniform d-flex justify-content-end bg-success text-white"
+              className="input-group-text-uniform bg-success text-white"
+              style={{ width: "130px" }}
             >
               Payment Date
             </InputGroup.Text>
-            <Form.Control
-              type="text"
-              readOnly
-              value={pDate}
-              onChange={(e) => setPDate(e.target.value)}
-            />
+            <Form.Control type="text" readOnly value={pDate} />
           </InputGroup>
           <InputGroup className="mb-2">
             <InputGroup.Text
-              id="basic-addon1"
-              className="input-group-text-uniform d-flex justify-content-end bg-success text-white"
+              className="input-group-text-uniform bg-success text-white"
+              style={{ width: "130px" }}
             >
               Amount
             </InputGroup.Text>
-            <Form.Control
-              type="text"
-              readOnly
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
+            <Form.Control type="text" readOnly value={amount} />
           </InputGroup>
           <InputGroup className="mb-2">
             <InputGroup.Text
-              id="basic-addon1"
-              className="input-group-text-uniform d-flex justify-content-end bg-success text-white"
+              className="input-group-text-uniform bg-success text-white"
+              style={{ width: "130px" }}
             >
               Payment For
             </InputGroup.Text>
-            <Form.Control
-              type="text"
-              readOnly
-              value={subs}
-              onChange={(e) => setSubs(e.target.value)}
-            />
+            <Form.Control type="text" readOnly value={subs} />
           </InputGroup>
         </Form>
       </Modal.Body>

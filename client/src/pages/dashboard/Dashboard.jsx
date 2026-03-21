@@ -1,12 +1,13 @@
-import { Breadcrumb, Col, Container, Row } from "react-bootstrap";
+import { Breadcrumb, Col, Container, Row, Spinner } from "react-bootstrap";
 import { MdHome } from "react-icons/md";
 import { useNavigate } from "react-router";
 import SubPaymentChart from "./SubPaymentChart";
 import ExpensesChart from "./ExpensesChart";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import axios from "axios";
 import { startOfDay } from "date-fns";
 import SampleCards from "./SampleCards";
+import { useQuery } from "@tanstack/react-query";
 
 const MONTH_ARR = [
   "Jan",
@@ -25,149 +26,117 @@ const MONTH_ARR = [
 
 const Dashboard = () => {
   let navigate = useNavigate();
-  const [listOfClients, setListOfClients] = useState([]);
-  const [listOfPayments, setListOfPayments] = useState([]);
-  const [listOfMembers, setListOfMembers] = useState([]);
-  const [listOfExpenses, setListOfExpenses] = useState([]);
-  //const [clientData, setClientData] = useState([]);
-  const [paymentData, setPaymentData] = useState([]);
-  const [activeClients, setActiveClients] = useState([]);
-  const [activeMember, setActiveMembers] = useState([]);
-  const [activeNonMem, setActiveNonMem] = useState([]);
-  const [members, setMembers] = useState([]);
   const [currentDate] = useState(new Date());
 
-  //fetch data
-  useEffect(() => {
-    //fetch clients data
-    axios.get("/api/clientsubs/active/all").then((response) => {
-      //console.log("Clients:", response.data);
-      setListOfClients(response.data);
-    });
-    //fetch payments data
-    axios.get("/api/payments").then((response) => {
-      //console.log("Payments:", response.data);
-      setListOfPayments(response.data);
-    });
-    //fetch all memberclients
-    axios.get("/api/clients").then((response) => {
-      //console.log(response.data);
-      setListOfMembers(response.data);
-    });
-    //fetch all expenses data
-    axios.get("/api/expenses").then((response) => {
-      setListOfExpenses(response.data);
-    });
-  }, []);
+  // Use TanStack Query for all server-side data
+  const { data: listOfClients = [], isLoading: loadingClients } = useQuery({
+    queryKey: ["activeClients"],
+    queryFn: () => axios.get("/api/clientsubs/active/all").then((res) => res.data),
+  });
 
-  //set ActiveClientsDate
-  useEffect(() => {
-    //set member gymn clients
+  const { data: listOfPayments = [], isLoading: loadingPayments } = useQuery({
+    queryKey: ["paymentsSummary"],
+    queryFn: () => axios.get("/api/payments/summary").then((res) => res.data),
+  });
+
+  const { data: listOfMembers = [], isLoading: loadingMembers } = useQuery({
+    queryKey: ["allMembers"],
+    queryFn: () => axios.get("/api/clients").then((res) => res.data),
+  });
+
+  const { data: listOfExpenses = [], isLoading: loadingExpenses } = useQuery({
+    queryKey: ["expensesSummary"],
+    queryFn: () => axios.get("/api/expenses/summary").then((res) => res.data),
+  });
+
+  // Deriving client stats with useMemo (Performance Optimization)
+  const clientStats = useMemo(() => {
+    const today = startOfDay(currentDate);
+
     const members = listOfMembers.filter((client) => client.isMember === true);
 
-    //set member gymn clients that are active
     const activeMem = listOfClients.filter(
       (client) =>
         client.ClientInfo.isMember === true &&
-        startOfDay(new Date(client.dateend)) >= startOfDay(currentDate),
+        startOfDay(new Date(client.dateend)) >= today,
     );
 
-    //set nonmember gymn clients that are active
     const nonMem = listOfClients.filter(
       (client) =>
         client.ClientInfo.isMember === false &&
-        startOfDay(new Date(client.dateend)) >= startOfDay(currentDate),
+        startOfDay(new Date(client.dateend)) >= today,
     );
 
-    //set active clients members and non members
     const activeClientList = listOfClients.filter(
-      (client) =>
-        startOfDay(new Date(client.dateend)) >= startOfDay(currentDate),
+      (client) => startOfDay(new Date(client.dateend)) >= today,
     );
-    setMembers(members);
-    setActiveMembers(activeMem);
-    setActiveNonMem(nonMem);
-    setActiveClients(activeClientList);
-  }, [listOfClients, currentDate, listOfMembers]);
 
-  //graph data for subscription payments
-  useEffect(() => {
+    return {
+      membersCount: members.length,
+      activeMembersCount: activeMem.length,
+      activeNonMembersCount: nonMem.length,
+      activeClientsCount: activeClientList.length,
+    };
+  }, [listOfClients, listOfMembers, currentDate]);
+
+  // Deriving chart data with useMemo
+  const paymentData = useMemo(() => {
     const getLastDateOfCurrentMonth = () => {
       return new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
     };
-    const setReportData = () => {
-      let reportData = [];
-      if (currentDate.getDate() < 15) {
-        for (let index = 1; index <= 15; index++) {
-          //reportData[index - 1] = index + `-${MONTH_ARR[currentDate.getMonth()]}`;
-          const toISODate = new Date(
-            Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), index),
-          );
-          // console.log("ISO Date", toISODate);
-          reportData.push({
-            dateDay: index,
-            month: MONTH_ARR[currentDate.getMonth()],
-            amount: 0,
-            date: toISODate.toISOString(),
-          });
-          //console.log("hi");
-        }
-      } else if (currentDate.getDate() >= 15) {
-        for (let index = 0; index < 15; index++) {
-          const val = currentDate.getDate() - 13 + index;
-          const toISODate = new Date(
-            Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), val),
-          );
-          if (val > getLastDateOfCurrentMonth().getDate()) break;
-          //reportData[index] = val + `-${MONTH_ARR[currentDate.getMonth()]}`;
-          //console.log("ISO Date", toISODate);
-          reportData.push({
-            dateDay: val,
-            month: MONTH_ARR[currentDate.getMonth()],
-            amount: 0,
-            date: toISODate.toISOString(),
-          });
-        }
-      }
 
-      //get daily aggregated data object
-      const aggregated = listOfPayments.reduce((acc, payment) => {
-        const { paymentdate, amount } = payment;
-        // If the date already exists, add to the total; otherwise, initialize it
-        acc[paymentdate] = (acc[paymentdate] || 0) + parseFloat(amount);
-        return acc;
-      }, {});
-      //console.log("agg:", aggregated);
-
-      //conToarrayOfObject
-      const aggregatedToObj = Object.entries(aggregated).map(
-        ([date, amount]) => ({ date, amount }),
-      );
-      //console.log("aggToObj:", aggregatedToObj);
-
-      //aggupdate the reportData
-      //console.log("REPORT DATA:", reportData);
-      reportData.forEach((report) => {
-        const matchingAgg = aggregatedToObj.find((agg) => {
-          // Compare the date strings (not the Date objects) for equality
-          //console.log(report, agg);
-          return agg.date === report.date;
+    let reportData = [];
+    if (currentDate.getDate() < 15) {
+      for (let index = 1; index <= 15; index++) {
+        const toISODate = new Date(
+          Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), index),
+        );
+        reportData.push({
+          dateDay: index,
+          month: MONTH_ARR[currentDate.getMonth()],
+          amount: 0,
+          date: toISODate.toISOString(),
         });
-        //console.log(matchingAgg);
+      }
+    } else {
+      for (let index = 0; index < 15; index++) {
+        const val = currentDate.getDate() - 13 + index;
+        const toISODate = new Date(
+          Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), val),
+        );
+        if (val > getLastDateOfCurrentMonth().getDate()) break;
+        reportData.push({
+          dateDay: val,
+          month: MONTH_ARR[currentDate.getMonth()],
+          amount: 0,
+          date: toISODate.toISOString(),
+        });
+      }
+    }
 
-        if (matchingAgg) {
-          report.amount = matchingAgg.amount;
-          //console.log(matchingAgg.amount);
-        }
-      });
+    // Map summary data correctly
+    reportData.forEach((report) => {
+      const matchingAgg = listOfPayments.find((agg) =>
+        report.date.startsWith(agg.date),
+      );
+      if (matchingAgg) {
+        report.amount = parseFloat(matchingAgg.totalAmount);
+      }
+    });
 
-      //console.log("aggToObj", aggregatedToObj);
-      return reportData;
-    };
-    const data = setReportData();
-    setPaymentData(data);
-    //console.log("data:", data);
+    return reportData;
   }, [currentDate, listOfPayments]);
+
+  const isLoading = loadingClients || loadingPayments || loadingMembers || loadingExpenses;
+
+  if (isLoading) {
+    return (
+      <Container className="text-center p-5">
+        <Spinner animation="border" variant="primary" />
+        <p className="mt-2">Loading Dashboard Data...</p>
+      </Container>
+    );
+  }
 
   return (
     <Container>
@@ -186,7 +155,7 @@ const Dashboard = () => {
         {/**Active Clients */}
         <Col md={3}>
           <SampleCards
-            data={activeClients.length}
+            data={clientStats.activeClientsCount}
             isMember={false}
             cardTitle={`Active Gym Clients`}
             desc={`Clients that are currently with active gym session`}
@@ -195,7 +164,7 @@ const Dashboard = () => {
         {/**Active Members */}
         <Col md={3}>
           <SampleCards
-            data={activeMember.length}
+            data={clientStats.activeMembersCount}
             isMember={true}
             cardTitle={`Active Gym Members`}
             desc={`Gym members with active gymn sessions`}
@@ -204,7 +173,7 @@ const Dashboard = () => {
         {/**Active Non Members */}
         <Col md={3}>
           <SampleCards
-            data={activeNonMem.length}
+            data={clientStats.activeNonMembersCount}
             isMember={false}
             cardTitle={`Active Non Members`}
             desc={`Non-member clients currently with active session`}
@@ -213,7 +182,7 @@ const Dashboard = () => {
         {/**Members */}
         <Col md={3}>
           <SampleCards
-            data={members.length}
+            data={clientStats.membersCount}
             isMember={true}
             cardTitle={`Gym Members`}
             desc={`Clients that currently avails membership status`}
@@ -228,7 +197,10 @@ const Dashboard = () => {
           <SubPaymentChart tableData={paymentData} />
         </Col>
         <Col md={4} className="mb-3">
-          <ExpensesChart />
+          <ExpensesChart 
+            paymentData={listOfPayments} 
+            expensesData={listOfExpenses} 
+          />
         </Col>
       </Row>
     </Container>

@@ -4,9 +4,10 @@ const db = require("./models");
 const path = require("path");
 const multer = require("multer");
 const cors = require("cors");
+require("dotenv").config();
 
 //port
-const PORT = 3005;
+const PORT = process.env.PORT || 3005;
 
 //import routes
 const clientRouter = require("./routes/clientInfo");
@@ -15,6 +16,7 @@ const clientSubsRouter = require("./routes/clientSubscription");
 const paymentRouter = require("./routes/payment");
 const userRouter = require("./routes/user");
 const expenseRouter = require("./routes/expense");
+const errorHandler = require("./middleware/errorMiddleware");
 
 //express middleware to parse json from body
 app.use(express.json());
@@ -48,6 +50,9 @@ app.use("/api/subscriptions", subsRouter);
 app.use("/api/payments", paymentRouter);
 app.use("/api/clientsubs", clientSubsRouter);
 app.use("/api/expenses", expenseRouter);
+
+// Global Error Handler
+app.use(errorHandler);
 
 db.sequelize.sync().then(() => {
   app.listen(PORT, () => {

@@ -7,110 +7,132 @@ import { format } from "date-fns";
 const ExpenseTable = ({
   listOfExpenses,
   handleViewDetails,
-  showAllPages,
   isReport,
+  currentPage = 1,
+  totalPages,
+  onPageChange,
+  showAllPages = false,
 }) => {
-  //console.log(listOfExpenses);
-  //set how many entries per page
-  const entriesPerPage = 10;
+  // Logic for client-side pagination fallback (used in reports)
+  const [localPage, setLocalPage] = useState(1);
+  const itemsPerPage = 10;
+  
+  // If we're NOT using server-side pagination (i.e., onPageChange is not provided)
+  const isServerSide = !!onPageChange;
+  const activePage = isServerSide ? currentPage : localPage;
+  
+  const displayExpenses = (isServerSide || showAllPages) 
+    ? listOfExpenses 
+    : listOfExpenses.slice((activePage - 1) * itemsPerPage, activePage * itemsPerPage);
 
-  //set the currentPage to page 1
-  const [currentPage, setCurrentPage] = useState(1);
+  const localTotalPages = Math.ceil(listOfExpenses.length / itemsPerPage);
+  const finalTotalPages = isServerSide ? totalPages : localTotalPages;
 
-  //calculate how many pages
-  const totalPages = Math.ceil(listOfExpenses.length / entriesPerPage);
-
-  //determine the indexes of first and last entries
-  const indexOfLastEntry = currentPage * entriesPerPage;
-  const indexOfFirstEntry = indexOfLastEntry - entriesPerPage;
-
-  //get the list of clients of the current page
-  const currentExpenses = showAllPages
-    ? listOfExpenses
-    : listOfExpenses.slice(indexOfFirstEntry, indexOfLastEntry);
-
-  //handle page changes pass the pagenumber as parameter
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
+  const handlePageClick = (pageNum) => {
+    if (isServerSide) {
+      onPageChange(pageNum);
+    } else {
+      setLocalPage(pageNum);
+    }
   };
+
   return (
     <>
-      <Table striped bordered hover>
+      <Table striped bordered hover responsive>
         <thead>
           <tr>
-            <th>No.</th>
+            <th className="text-end">No.</th>
             <th>Expense Name</th>
             <th>Category</th>
-            <th>Amount</th>
+            <th className="text-end">Amount</th>
             <th>Date</th>
-            {!isReport && <th style={{ width: "200px" }}>Actions</th>}
+            {!isReport && <th className="text-center">Actions</th>}
           </tr>
         </thead>
         <tbody>
-          {currentExpenses.map((expense, key) => {
-            const formattedDate = format(expense.expdate, "MMMM d, yyyy");
-            return (
-              <tr key={key}>
-                <td>{key + 1}</td>
-                <td>{expense.title}</td>
-                <td>{expense.category}</td>
-                <td>{expense.amount}</td>
-                <td>{formattedDate}</td>
-                {!isReport && (
-                  <td>
-                    <Button size="sm" variant="warning" title="Edit">
-                      <MdEdit />
-                    </Button>{" "}
-                    <Button
-                      size="sm"
-                      variant="info"
-                      title="View"
-                      onClick={() => handleViewDetails(expense)}
-                    >
-                      <MdVisibility />
-                    </Button>{" "}
-                    <Button size="sm" variant="danger" title="Delete">
-                      <MdDelete />
-                    </Button>
+          {displayExpenses.length > 0 ? (
+            displayExpenses.map((expense, index) => {
+              const formattedDate = format(new Date(expense.expdate), "MMMM d, yyyy");
+              const rowNumber = isServerSide 
+                ? index + 1 + (activePage - 1) * 10
+                : index + 1 + (activePage - 1) * itemsPerPage;
+
+              return (
+                <tr key={expense.id || index}>
+                  <td className="text-end">{rowNumber}</td>
+                  <td>{expense.title}</td>
+                  <td>{expense.category}</td>
+                  <td className="text-end">
+                    {parseFloat(expense.amount).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
                   </td>
-                )}
-              </tr>
-            );
-          })}
+                  <td>{formattedDate}</td>
+                  {!isReport && (
+                    <td className="text-center">
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        onClick={() => handleViewDetails(expense)}
+                        title="View"
+                      >
+                        <MdVisibility /> View
+                      </Button>
+                    </td>
+                  )}
+                </tr>
+              );
+            })
+          ) : (
+            <tr>
+              <td colSpan={isReport ? 5 : 6} className="text-center">
+                No expenses found.
+              </td>
+            </tr>
+          )}
         </tbody>
       </Table>
-      {!showAllPages && (
-        <Pagination className="justify-content-center">
-          {/**First Page */}
+      {!showAllPages && finalTotalPages > 1 && (
+        <Pagination className="justify-content-center mt-3">
           <Pagination.First
-            onClick={() => handlePageChange(1)}
-            disabled={currentPage === 1}
+            onClick={() => handlePageClick(1)}
+            disabled={activePage === 1}
           />
-          {/**Previous Page */}
           <Pagination.Prev
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
+            onClick={() => handlePageClick(activePage - 1)}
+            disabled={activePage === 1}
           />
-          {/**Numbered Pages */}
-          {Array.from({ length: totalPages }, (_, i) => (
-            <Pagination.Item
-              key={i + 1}
-              active={i + 1 === currentPage}
-              onClick={() => handlePageChange(i + 1)}
-            >
-              {i + 1}
-            </Pagination.Item>
-          ))}
-
-          {/**Next Page */}
+          {[...Array(finalTotalPages)].map((_, i) => {
+            const pageNum = i + 1;
+            if (
+              pageNum === 1 ||
+              pageNum === finalTotalPages ||
+              (pageNum >= activePage - 2 && pageNum <= activePage + 2)
+            ) {
+              return (
+                <Pagination.Item
+                  key={pageNum}
+                  active={pageNum === activePage}
+                  onClick={() => handlePageClick(pageNum)}
+                >
+                  {pageNum}
+                </Pagination.Item>
+              );
+            } else if (
+              pageNum === activePage - 3 ||
+              pageNum === activePage + 3
+            ) {
+              return <Pagination.Ellipsis key={pageNum} disabled />;
+            }
+            return null;
+          })}
           <Pagination.Next
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
+            onClick={() => handlePageClick(activePage + 1)}
+            disabled={activePage === finalTotalPages}
           />
-          {/**Last Page */}
           <Pagination.Last
-            onClick={() => handlePageChange(totalPages)}
-            disabled={currentPage === totalPages}
+            onClick={() => handlePageClick(finalTotalPages)}
+            disabled={activePage === finalTotalPages}
           />
         </Pagination>
       )}
@@ -122,6 +144,9 @@ ExpenseTable.propTypes = {
   listOfExpenses: PropTypes.array,
   handleViewDetails: PropTypes.func,
   isReport: PropTypes.bool,
+  currentPage: PropTypes.number,
+  totalPages: PropTypes.number,
+  onPageChange: PropTypes.func,
   showAllPages: PropTypes.bool,
 };
 
