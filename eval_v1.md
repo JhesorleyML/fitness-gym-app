@@ -12,7 +12,7 @@ This document provides a technical evaluation of the Benford Gym App's current a
 *   **ORM Protection:** Employs Sequelize, which helps mitigate most common SQL Injection vulnerabilities by default.
 
 ### **Areas for Improvement**
-*   **Hardcoded Secrets:** The JWT secret key (`"s3cretKey"`) is hardcoded in the source code.
+*   **Hardcoded Secrets:** The JWT secret key is hardcoded in the source code.
     *   *Recommendation:* Move all sensitive keys to a `.env` file and use `dotenv` to load them.
 *   **Role-Based Access Control (RBAC):** While authentication is present, many endpoints lack specific authorization checks (e.g., verifying if a user is an 'Admin' before allowing sensitive operations).
     *   *Recommendation:* Implement a middleware to check `user.role` after token verification.
