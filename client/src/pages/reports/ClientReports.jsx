@@ -1,5 +1,13 @@
 import { useRef, useState, useMemo } from "react";
-import { Breadcrumb, Button, Col, Container, Form, Row, Spinner } from "react-bootstrap";
+import {
+  Breadcrumb,
+  Button,
+  Col,
+  Container,
+  Form,
+  Row,
+  Spinner,
+} from "react-bootstrap";
 import axios from "axios";
 import ClientTable from "../../Components/ClientTable";
 import { MdHome } from "react-icons/md";
@@ -16,7 +24,12 @@ const ClientReports = () => {
   const [isActive, setIsActive] = useState(true);
 
   // Use TanStack Query
-  const { data: listOfClients = [], isLoading, isError, error } = useQuery({
+  const {
+    data: listOfClients = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["allClientsReport"],
     queryFn: () => axios.get("/api/clients/").then((res) => res.data),
     staleTime: 5 * 60 * 1000,
@@ -42,9 +55,13 @@ const ClientReports = () => {
       const printContent = reportRef.current;
       const windowPrint = window.open("", "", "width=900,height=650");
       windowPrint.document.write("<html><head><title>Print Report</title>");
-      windowPrint.document.write('<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">');
+      windowPrint.document.write(
+        '<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">',
+      );
       windowPrint.document.write("</head><body>");
-      windowPrint.document.write("<div class='text-center'><h1>BENFOR FITNESS GYM<h1></div>");
+      windowPrint.document.write(
+        "<div class='text-center'><h1>BENFORD FITNESS GYM<h1></div>",
+      );
       windowPrint.document.write(printContent.innerHTML);
       windowPrint.document.write("</body></html>");
       windowPrint.document.close();
@@ -54,7 +71,10 @@ const ClientReports = () => {
     }, 500);
   };
 
-  if (isError) return <div className="text-center text-danger p-5">Error: {error.message}</div>;
+  if (isError)
+    return (
+      <div className="text-center text-danger p-5">Error: {error.message}</div>
+    );
 
   return (
     <Container>
@@ -89,14 +109,21 @@ const ClientReports = () => {
           />
         </Col>
         <Col md={{ span: 2, offset: 2 }}>
-          <Button variant="outline-success" className="w-100" onClick={handlePrint} disabled={isLoading}>
+          <Button
+            variant="outline-success"
+            className="w-100"
+            onClick={handlePrint}
+            disabled={isLoading}
+          >
             Print Report
           </Button>
         </Col>
       </Row>
 
       {isLoading ? (
-        <div className="text-center p-5"><Spinner animation="border" variant="primary" /></div>
+        <div className="text-center p-5">
+          <Spinner animation="border" variant="primary" />
+        </div>
       ) : (
         <div ref={reportRef} className="mt-3">
           <div className="report-title text-center">

@@ -28,12 +28,22 @@ const ExpensesReports = () => {
   const [filterType, setFilterType] = useState("0");
   const [dateFrom, setDateFrom] = useState(new Date());
   const [dateTo, setDateTo] = useState(new Date());
-  const [filterYear, setFilterYear] = useState(new Date().getFullYear().toString());
+  const [filterYear, setFilterYear] = useState(
+    new Date().getFullYear().toString(),
+  );
 
   // Use TanStack Query
-  const { data: rawExpenses = [], isLoading, isError, error } = useQuery({
+  const {
+    data: rawExpenses = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["allExpensesReport"],
-    queryFn: () => axios.get("/api/expenses?limit=10000").then(res => res.data.expenses || res.data),
+    queryFn: () =>
+      axios
+        .get("/api/expenses?limit=10000")
+        .then((res) => res.data.expenses || res.data),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -45,10 +55,14 @@ const ExpensesReports = () => {
 
     switch (parseInt(filterType)) {
       case 1: // TODAY
-        filtered = rawExpenses.filter((e) => isEqual(startOfDay(new Date(e.expdate)), today));
+        filtered = rawExpenses.filter((e) =>
+          isEqual(startOfDay(new Date(e.expdate)), today),
+        );
         break;
       case 2: // YESTERDAY
-        filtered = rawExpenses.filter((e) => differenceInDays(today, startOfDay(new Date(e.expdate))) === 1);
+        filtered = rawExpenses.filter(
+          (e) => differenceInDays(today, startOfDay(new Date(e.expdate))) === 1,
+        );
         break;
       case 3: // DATE RANGE
         filtered = rawExpenses.filter((e) => {
@@ -56,7 +70,7 @@ const ExpensesReports = () => {
           return d >= startOfDay(dateFrom) && d <= startOfDay(dateTo);
         });
         break;
-      case 4: // MONTHLY
+      case 4: { // MONTHLY
         for (let month = 1; month <= 12; month++) {
           monthly.push({
             month: `${filterYear}-${String(month).padStart(2, "0")}`,
@@ -75,6 +89,7 @@ const ExpensesReports = () => {
           if (reportMap[entry.month]) entry.amount = reportMap[entry.month];
         });
         break;
+      }
       default: // ALL RECORDS
         filtered = rawExpenses;
         break;
@@ -82,7 +97,7 @@ const ExpensesReports = () => {
 
     const total = (parseInt(filterType) === 4 ? monthly : filtered).reduce(
       (sum, item) => sum + parseFloat(item.amount || 0),
-      0
+      0,
     );
 
     const formattedTotal = new Intl.NumberFormat("en-US", {
@@ -90,7 +105,11 @@ const ExpensesReports = () => {
       currency: "PHP",
     }).format(total);
 
-    return { filteredExpenses: filtered, monthlyData: monthly, totalAmount: formattedTotal };
+    return {
+      filteredExpenses: filtered,
+      monthlyData: monthly,
+      totalAmount: formattedTotal,
+    };
   }, [filterType, rawExpenses, dateFrom, dateTo, filterYear]);
 
   const handlePrint = () => {
@@ -99,9 +118,13 @@ const ExpensesReports = () => {
       const printContent = reportRef.current;
       const windowPrint = window.open("", "", "width=900,height=650");
       windowPrint.document.write("<html><head><title>Print Report</title>");
-      windowPrint.document.write('<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">');
+      windowPrint.document.write(
+        '<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">',
+      );
       windowPrint.document.write("</head><body>");
-      windowPrint.document.write("<div class='text-center'><h1>BENFOR FITNESS GYM<h1></div>");
+      windowPrint.document.write(
+        "<div class='text-center'><h1>BENFORD FITNESS GYM<h1></div>",
+      );
       windowPrint.document.write(printContent.innerHTML);
       windowPrint.document.write("</body></html>");
       windowPrint.document.close();
@@ -111,13 +134,20 @@ const ExpensesReports = () => {
     }, 500);
   };
 
-  if (isError) return <div className="text-center text-danger p-5">Error: {error.message}</div>;
+  if (isError)
+    return (
+      <div className="text-center text-danger p-5">Error: {error.message}</div>
+    );
 
   return (
     <Container>
       <Breadcrumb>
-        <Breadcrumb.Item onClick={() => navigate("/")}><MdHome /></Breadcrumb.Item>
-        <Breadcrumb.Item onClick={() => navigate("/dashboard")}>Dashboard</Breadcrumb.Item>
+        <Breadcrumb.Item onClick={() => navigate("/")}>
+          <MdHome />
+        </Breadcrumb.Item>
+        <Breadcrumb.Item onClick={() => navigate("/dashboard")}>
+          Dashboard
+        </Breadcrumb.Item>
         <Breadcrumb.Item>Reports</Breadcrumb.Item>
         <Breadcrumb.Item href="#">Expenses</Breadcrumb.Item>
       </Breadcrumb>
@@ -125,8 +155,13 @@ const ExpensesReports = () => {
       <Row className="mb-3">
         <Col md={3}>
           <InputGroup>
-            <InputGroup.Text className="bg-info text-white">Filter</InputGroup.Text>
-            <Form.Select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+            <InputGroup.Text className="bg-info text-white">
+              Filter
+            </InputGroup.Text>
+            <Form.Select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+            >
               <option value="0">All records</option>
               <option value="1">Today</option>
               <option value="2">Yesterday</option>
@@ -138,14 +173,35 @@ const ExpensesReports = () => {
         <Col>
           {filterType === "3" && (
             <Row>
-              <Col md={6}><InputGroup><InputGroup.Text>From:</InputGroup.Text><DatePicker className="form-control" selected={dateFrom} onChange={setDateFrom} /></InputGroup></Col>
-              <Col md={6}><InputGroup><InputGroup.Text>To:</InputGroup.Text><DatePicker className="form-control" selected={dateTo} onChange={setDateTo} /></InputGroup></Col>
+              <Col md={6}>
+                <InputGroup>
+                  <InputGroup.Text>From:</InputGroup.Text>
+                  <DatePicker
+                    className="form-control"
+                    selected={dateFrom}
+                    onChange={setDateFrom}
+                  />
+                </InputGroup>
+              </Col>
+              <Col md={6}>
+                <InputGroup>
+                  <InputGroup.Text>To:</InputGroup.Text>
+                  <DatePicker
+                    className="form-control"
+                    selected={dateTo}
+                    onChange={setDateTo}
+                  />
+                </InputGroup>
+              </Col>
             </Row>
           )}
           {filterType === "4" && (
             <InputGroup style={{ maxWidth: "200px" }}>
               <InputGroup.Text>Year</InputGroup.Text>
-              <Form.Select value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
+              <Form.Select
+                value={filterYear}
+                onChange={(e) => setFilterYear(e.target.value)}
+              >
                 <option value="2026">2026</option>
                 <option value="2025">2025</option>
                 <option value="2024">2024</option>
@@ -154,26 +210,49 @@ const ExpensesReports = () => {
           )}
         </Col>
         <Col md={2}>
-          <Button variant="outline-success" className="w-100" onClick={handlePrint} disabled={isLoading}>Print Report</Button>
+          <Button
+            variant="outline-success"
+            className="w-100"
+            onClick={handlePrint}
+            disabled={isLoading}
+          >
+            Print Report
+          </Button>
         </Col>
       </Row>
 
       {isLoading ? (
-        <div className="text-center p-5"><Spinner animation="border" variant="primary" /></div>
+        <div className="text-center p-5">
+          <Spinner animation="border" variant="primary" />
+        </div>
       ) : (
         <div ref={reportRef} className="mt-3">
           <div className="report-title text-center">
             <h3>Expense Reports</h3>
-            {filterType === "3" && <h6>From: {format(dateFrom, "MMMM d, yyyy")} To {format(dateTo, "MMMM d, yyyy")}</h6>}
+            {filterType === "3" && (
+              <h6>
+                From: {format(dateFrom, "MMMM d, yyyy")} To{" "}
+                {format(dateTo, "MMMM d, yyyy")}
+              </h6>
+            )}
           </div>
           <Row className="mb-2 fw-bold">
-            <Col>No. of Records: {filterType === "4" ? monthlyData.length : filteredExpenses.length}</Col>
+            <Col>
+              No. of Records:{" "}
+              {filterType === "4"
+                ? monthlyData.length
+                : filteredExpenses.length}
+            </Col>
             <Col className="text-end">Total: {totalAmount}</Col>
           </Row>
           {filterType === "4" ? (
             <MonthlyReportTable data={monthlyData} />
           ) : (
-            <ExpenseTable listOfExpenses={filteredExpenses} showAllPages={showAllPages} isReport={true} />
+            <ExpenseTable
+              listOfExpenses={filteredExpenses}
+              showAllPages={showAllPages}
+              isReport={true}
+            />
           )}
         </div>
       )}

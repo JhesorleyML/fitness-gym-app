@@ -49,8 +49,8 @@ const validationSchemas = [
       })
       .typeError("Please enter a valid date")
       .required("This is a required field")
-      .min("1969-11-13", "Date is too early")
-      .max("2015-12-31", "Invalid, the client is too young"),
+      .min("1900-11-13", "Date is too early")
+      .max("2020-12-31", "Invalid, the client is too young"),
   }),
   Yup.object({
     emergencyName: Yup.string().required("This is a required field"),
@@ -123,13 +123,6 @@ const AddClient = () => {
           alert(response.data.message);
         });
 
-      // axios
-      //   .post("http://localhost:3005/api/clients/new", values)
-      //   .then((response) => {
-      //     console.log(response.data);
-      //     alert(response.data.message);
-      //   });
-      //set the form to return to first step
       setCurrentStep(1);
       //reset form values to initial values
       resetForm();
