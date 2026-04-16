@@ -103,10 +103,15 @@ Benford Gym App is a comprehensive gym management system designed to handle clie
 ## 6. Main Features
 1. **Member Profiling**: Detailed records including photos and emergency contacts.
 2. **Subscription Lifecycle**: Track when memberships start and expire.
-3. **Financial Tracking**: Manage both income (payments) and outgoings (expenses).
-4. **Data Visualization**: Visual representation of gym performance through charts.
-5. **Secure Access**: Role-based access and JWT-protected API endpoints.
-6. **Reporting**: Generate and export data for business analysis.
+3. **Conditional Status Highlighting**: Visual cues in client tables for expiring subscriptions:
+   - **Orange (Warning)**: 5 days or less remaining.
+   - **Red (Critical)**: 2 days or less remaining.
+4. **Financial Tracking**: Manage both income (payments) and outgoings (expenses).
+5. **Data Visualization**: Visual representation of gym performance through charts.
+6. **Secure Access**: Role-based access and JWT-protected API endpoints.
+   - **Superadmin/Admin**: Full access to all modules including User management and Reports.
+   - **Staff**: Access to Dashboard, Clients, Subscriptions, Payments, and Expenses. Restrict access to User management and Reports modules.
+7. **Reporting**: Generate and export data for business analysis (Restricted to Admin roles).
 
 ---
 

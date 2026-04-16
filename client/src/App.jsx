@@ -3,7 +3,7 @@ import TopNav from "./Components/TopNav";
 import { BrowserRouter, Routes, Route } from "react-router";
 import Login from "./pages/login/Login";
 import Dashboard from "./pages/dashboard/Dashboard";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { AuthContext } from "./helpers/AuthContext";
 import TopNavNotLoggedIn from "./Components/TopNavNotLoggedIn";
@@ -34,14 +34,14 @@ function App() {
     queryFn: async () => {
       const token = sessionStorage.getItem("accessToken");
       if (!token) return defState;
-      
+
       try {
         const response = await axios.get("/api/auth", {
           headers: { accessToken: token },
         });
-        
+
         if (response.data.error) return defState;
-        
+
         const userData = {
           username: response.data.user.username,
           id: response.data.user.id,
@@ -51,6 +51,7 @@ function App() {
         setAuthState(userData);
         return userData;
       } catch (err) {
+        console.log(err);
         return defState;
       }
     },
@@ -60,7 +61,10 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ height: "100vh" }}>
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "100vh" }}
+      >
         <Spinner animation="border" variant="primary" />
         <span className="ms-2">Verifying session...</span>
       </div>
@@ -72,13 +76,11 @@ function App() {
       <div className="App-content">
         <AuthContext.Provider value={{ authState, setAuthState }}>
           <BrowserRouter>
-            {
-              authState.status === false ? (
-                <TopNavNotLoggedIn />
-              ) : (
-                <TopNav userRole={authState.role} />
-              )
-            }
+            {authState.status === false ? (
+              <TopNavNotLoggedIn />
+            ) : (
+              <TopNav userRole={authState.role} />
+            )}
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route
@@ -101,8 +103,7 @@ function App() {
                     isAuth={
                       authState.status &&
                       (authState.role === "superadmin" ||
-                        authState.role === "admin" ||
-                        authState.role === "staff")
+                        authState.role === "admin")
                     }
                     component={<Register />}
                   />
@@ -148,7 +149,7 @@ function App() {
                 path="/reports"
                 element={
                   <ProtectedRoute
-                    isAuth={authState.status}
+                    isAuth={authState.status && authState.role !== "staff"}
                     component={<Reports userId={authState.id} />}
                   />
                 }
@@ -157,7 +158,7 @@ function App() {
                 path="/reports/payments"
                 element={
                   <ProtectedRoute
-                    isAuth={authState.status}
+                    isAuth={authState.status && authState.role !== "staff"}
                     component={<PaymentReports userId={authState.id} />}
                   />
                 }
@@ -166,7 +167,7 @@ function App() {
                 path="/reports/clients"
                 element={
                   <ProtectedRoute
-                    isAuth={authState.status}
+                    isAuth={authState.status && authState.role !== "staff"}
                     component={<ClientReports userId={authState.id} />}
                   />
                 }
@@ -175,7 +176,7 @@ function App() {
                 path="/reports/expenses"
                 element={
                   <ProtectedRoute
-                    isAuth={authState.status}
+                    isAuth={authState.status && authState.role !== "staff"}
                     component={<ExpensesReports userId={authState.id} />}
                   />
                 }

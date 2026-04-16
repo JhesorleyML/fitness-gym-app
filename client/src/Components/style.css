@@ -23,3 +23,22 @@ img.rounded-circle {
   justify-content: center;
   opacity: 0.7;
 }
+
+.row-warning, 
+tr.row-warning td {
+  background-color: #ffc107 !important; /* Orange */
+  --bs-table-accent-bg: #ffc107 !important;
+  --bs-table-striped-bg: #ffc107 !important;
+}
+
+.row-danger,
+tr.row-danger td {
+  background-color: #dc3545 !important; /* Red */
+  color: white !important;
+  --bs-table-accent-bg: #dc3545 !important;
+  --bs-table-striped-bg: #dc3545 !important;
+}
+
+.row-danger .btn-success {
+  border-color: white;
+}

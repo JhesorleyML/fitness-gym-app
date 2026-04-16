@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button, Pagination, Table } from "react-bootstrap";
 import PropTypes from "prop-types";
 import { MdVisibility } from "react-icons/md";
-import { format } from "date-fns";
+import { format, differenceInDays, startOfDay } from "date-fns";
+import "./style.css";
 
 const ClientTable = ({
   listOfClients,
@@ -61,8 +62,23 @@ const ClientTable = ({
         <tbody>
           {currentClients.map((client, key) => {
             const rowNumber = (currentPage - 1) * entriesPerPage + key + 1;
+
+            let rowClass = "";
+            if (isSubList && client.dateend) {
+              const daysLeft = differenceInDays(
+                startOfDay(new Date(client.dateend)),
+                startOfDay(new Date())
+              );
+
+              if (daysLeft <= 2) {
+                rowClass = "row-danger";
+              } else if (daysLeft <= 5) {
+                rowClass = "row-warning";
+              }
+            }
+
             return (
-              <tr key={key}>
+              <tr key={key} className={rowClass}>
                 <td>{rowNumber}</td>
                 <td>{client.lastname}</td>
                 <td>{client.firstname}</td>

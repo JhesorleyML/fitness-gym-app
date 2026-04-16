@@ -10,7 +10,7 @@ const { validateToken, authorize } = require("../AuthMiddleware/Auth");
 router.post(
   "/new",
   validateToken,
-  authorize(["superadmin", "admin", "staff"]),
+  authorize(["superadmin", "admin"]),
   async (req, res, next) => {
     try {
       //body username, password, fullname, contactno, address, role
@@ -23,10 +23,6 @@ router.post(
         canCreate = true; // Can create admin, staff, user
       } else if (creatorRole === "admin") {
         if (role === "staff" || role === "user") {
-          canCreate = true;
-        }
-      } else if (creatorRole === "staff") {
-        if (role === "user") {
           canCreate = true;
         }
       }

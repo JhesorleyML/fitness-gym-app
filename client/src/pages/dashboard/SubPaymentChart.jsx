@@ -22,7 +22,7 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
 
 const SubPaymentChart = ({ tableData }) => {
@@ -31,12 +31,12 @@ const SubPaymentChart = ({ tableData }) => {
   //console.log("Data Set: ", tableData);
   const tableLabelMemo = useMemo(
     () => tableData.map((element) => `${element.dateDay}-${element.month}`),
-    [tableData]
+    [tableData],
   );
 
   const tableDataSetMemo = useMemo(
     () => tableData.map((element) => element.amount),
-    [tableData]
+    [tableData],
   );
 
   useEffect(() => {
@@ -81,10 +81,10 @@ const SubPaymentChart = ({ tableData }) => {
       y: {
         beginAtZero: true,
       },
-      y1: {
-        position: "right",
-        beginAtZero: true,
-      },
+      // y1: {
+      //   position: "right",
+      //   beginAtZero: true,
+      // },
     },
   };
   return (

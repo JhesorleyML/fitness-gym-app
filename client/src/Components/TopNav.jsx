@@ -64,20 +64,24 @@ const TopNav = ({ userRole }) => {
               <Nav.Link onClick={() => navigate("/expenses")}>
                 Expenses
               </Nav.Link>
-              <NavDropdown title="Reports" id="report-nav-dropdown">
-                <NavDropdown.Item onClick={() => navigate("/reports/payments")}>
-                  Payment Reports
-                </NavDropdown.Item>
-                <NavDropdown.Item onClick={() => navigate("/reports/clients")}>
-                  Gym Clients
-                </NavDropdown.Item>
-                <NavDropdown.Item onClick={() => navigate("/reports/expenses")}>
-                  Expenses Reports
-                </NavDropdown.Item>
-              </NavDropdown>
-              {(userRole === "superadmin" ||
-                userRole === "admin" ||
-                userRole === "staff") && (
+              {userRole !== "staff" && (
+                <NavDropdown title="Reports" id="report-nav-dropdown">
+                  <NavDropdown.Item
+                    onClick={() => navigate("/reports/payments")}
+                  >
+                    Payment Reports
+                  </NavDropdown.Item>
+                  <NavDropdown.Item onClick={() => navigate("/reports/clients")}>
+                    Gym Clients
+                  </NavDropdown.Item>
+                  <NavDropdown.Item
+                    onClick={() => navigate("/reports/expenses")}
+                  >
+                    Expenses Reports
+                  </NavDropdown.Item>
+                </NavDropdown>
+              )}
+              {(userRole === "superadmin" || userRole === "admin") && (
                 <NavDropdown title="User" id="user-nav-dropdown">
                   <NavDropdown.Item onClick={() => navigate("/register")}>
                     New User
