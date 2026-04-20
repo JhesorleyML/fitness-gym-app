@@ -17,7 +17,7 @@ img.rounded-circle {
   background-position: center; /* Centers the image */
   background-repeat: no-repeat; /* Prevents repeating the image */
   width: 100%;
-  height: 150px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -16,6 +16,7 @@ const clientSubsRouter = require("./routes/clientSubscription");
 const paymentRouter = require("./routes/payment");
 const userRouter = require("./routes/user");
 const expenseRouter = require("./routes/expense");
+const attendanceRouter = require("./routes/attendance");
 const errorHandler = require("./middleware/errorMiddleware");
 
 //express middleware to parse json from body
@@ -50,11 +51,17 @@ app.use("/api/subscriptions", subsRouter);
 app.use("/api/payments", paymentRouter);
 app.use("/api/clientsubs", clientSubsRouter);
 app.use("/api/expenses", expenseRouter);
+app.use("/api/attendance", attendanceRouter);
+
+const { populateMissingQRCodes } = require("./utils/migration");
 
 // Global Error Handler
 app.use(errorHandler);
 
-db.sequelize.sync().then(() => {
+db.sequelize.sync().then(async () => {
+  // Run migration to populate missing QR codes for existing clients
+  await populateMissingQRCodes();
+  
   app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
   });

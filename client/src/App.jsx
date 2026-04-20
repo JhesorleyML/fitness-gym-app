@@ -21,6 +21,8 @@ import ClientReports from "./pages/reports/ClientReports";
 import HomePage from "./pages/home/HomePage";
 import Expenses from "./pages/expenses/Expenses";
 import ExpensesReports from "./pages/reports/ExpensesReports";
+import AttendanceScanner from "./pages/attendance/AttendanceScanner";
+import AttendanceLogs from "./pages/attendance/AttendanceLogs";
 import { useQuery } from "@tanstack/react-query";
 import { Spinner } from "react-bootstrap";
 
@@ -187,6 +189,16 @@ function App() {
                   <ProtectedRoute
                     isAuth={authState.status}
                     component={<Expenses userId={authState.id} />}
+                  />
+                }
+              />
+              <Route path="/attendance" element={<AttendanceScanner />} />
+              <Route
+                path="/attendance/logs"
+                element={
+                  <ProtectedRoute
+                    isAuth={authState.status}
+                    component={<AttendanceLogs />}
                   />
                 }
               />

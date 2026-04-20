@@ -43,6 +43,12 @@ const TopNav = ({ userRole }) => {
 
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
+              <Nav.Link onClick={() => navigate("/attendance")}>
+                Attendance
+              </Nav.Link>
+              <Nav.Link onClick={() => navigate("/attendance/logs")}>
+                Attendance Logs
+              </Nav.Link>
               <Nav.Link onClick={() => navigate("/dashboard")}>
                 Dashboard
               </Nav.Link>
@@ -71,7 +77,9 @@ const TopNav = ({ userRole }) => {
                   >
                     Payment Reports
                   </NavDropdown.Item>
-                  <NavDropdown.Item onClick={() => navigate("/reports/clients")}>
+                  <NavDropdown.Item
+                    onClick={() => navigate("/reports/clients")}
+                  >
                     Gym Clients
                   </NavDropdown.Item>
                   <NavDropdown.Item

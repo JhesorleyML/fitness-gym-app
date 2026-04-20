@@ -3,7 +3,7 @@ import { Button, Form, InputGroup, Modal, Spinner } from "react-bootstrap";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
-import { MdCategory, MdMonetizationOn, MdPerson2 } from "react-icons/md";
+import { MdCategory, MdEvent, MdMonetizationOn, MdPerson2 } from "react-icons/md";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -11,12 +11,14 @@ const validationSchema = Yup.object().shape({
   clientId: Yup.string().required("Client name is required."),
   subsId: Yup.string().required("Subscription type is a required field"),
   amount: Yup.number().required("This field is required"),
+  paymentDate: Yup.date().required("Payment date is required"),
 });
 
 const initialValues = {
   clientId: "",
   subsId: "",
   amount: "",
+  paymentDate: new Date().toISOString().split("T")[0],
 };
 
 const NewPaymentModal = ({
@@ -71,12 +73,10 @@ const NewPaymentModal = ({
   };
 
   const handleModalSubmit = (values, { setSubmitting, resetForm }) => {
-    const formattedDate = new Date().toISOString().split("T")[0];
-    
     const payload = {
       ...values,
-      datestart: formattedDate,
-      paymentdate: formattedDate,
+      datestart: values.paymentDate,
+      paymentdate: values.paymentDate,
       duration,
       userId,
     };
@@ -169,6 +169,25 @@ const NewPaymentModal = ({
                   </Form.Select>
                   <Form.Control.Feedback type="invalid">
                     {errors.subsId}
+                  </Form.Control.Feedback>
+                </InputGroup>
+
+                {/**Payment Date */}
+                <Form.Label className="label-left">Payment Date</Form.Label>
+                <InputGroup className="mb-3">
+                  <InputGroup.Text id="date-addon" className="bg-info text-white">
+                    <MdEvent />
+                  </InputGroup.Text>
+                  <Form.Control
+                    name="paymentDate"
+                    type="date"
+                    value={values.paymentDate}
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                    isInvalid={touched.paymentDate && !!errors.paymentDate}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.paymentDate}
                   </Form.Control.Feedback>
                 </InputGroup>
 

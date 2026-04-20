@@ -82,12 +82,12 @@ router.post("/new", async (req, res, next) => {
       userId,
       paymentdate,
     } = req.body;
-    //create a new date object
-    const currentDate = new Date();
-    //dateEnd in the database = dateStart + duration
-    currentDate.setDate(currentDate.getDate() + parseInt(duration));
+    //create a new date object based on datestart
+    const startDate = new Date(datestart);
+    //dateEnd in the database = dateStart + (duration-1) payment is for the first day of the subscription so we add (duration-1) to get the end date
+    startDate.setDate(startDate.getDate() + (parseInt(duration) - 1));
     const dateend =
-      parseInt(duration) === 0 ? null : currentDate.toISOString().split("T")[0];
+      parseInt(duration) === 0 ? null : startDate.toISOString().split("T")[0];
     //create new record
     console.log(dateend);
     const newClientSub = await ClientSubscription.create({
@@ -111,7 +111,7 @@ router.post("/new", async (req, res, next) => {
           { isMember: true },
           {
             where: { id: clientId },
-          }
+          },
         );
         console.log(upd);
       }

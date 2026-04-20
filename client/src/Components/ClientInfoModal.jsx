@@ -21,7 +21,7 @@ const ClientInfoModal = ({ data, handleClose, show }) => {
     try {
       bdate = format(new Date(data.bdate), "MMMM dd, yyyy");
     } catch (error) {
-      console.error("Invalid birthdate:", data.bdate);
+      console.error("Invalid birthdate:", error);
     }
   }
 
@@ -42,59 +42,85 @@ const ClientInfoModal = ({ data, handleClose, show }) => {
               style={{ objectFit: "cover" }}
             />
           </div>
-          <div className="mb-2 text-primary fw-bold">Client Information Details</div>
-          
+          <div className="mb-2 text-primary fw-bold">
+            Client Information Details
+          </div>
+
           <InputGroup className="mb-2">
-            <InputGroup.Text className="input-group-text-uniform bg-success text-white" style={{ width: "120px" }}>
+            <InputGroup.Text
+              className="input-group-text-uniform bg-success text-white"
+              style={{ width: "120px" }}
+            >
               Firstname
             </InputGroup.Text>
             <Form.Control type="text" readOnly value={firstname} />
           </InputGroup>
 
           <InputGroup className="mb-2">
-            <InputGroup.Text className="input-group-text-uniform bg-success text-white" style={{ width: "120px" }}>
+            <InputGroup.Text
+              className="input-group-text-uniform bg-success text-white"
+              style={{ width: "120px" }}
+            >
               Middlename
             </InputGroup.Text>
             <Form.Control type="text" readOnly value={middlename} />
           </InputGroup>
 
           <InputGroup className="mb-2">
-            <InputGroup.Text className="input-group-text-uniform bg-success text-white" style={{ width: "120px" }}>
+            <InputGroup.Text
+              className="input-group-text-uniform bg-success text-white"
+              style={{ width: "120px" }}
+            >
               Lastname
             </InputGroup.Text>
             <Form.Control type="text" readOnly value={lastname} />
           </InputGroup>
 
           <InputGroup className="mb-2">
-            <InputGroup.Text className="input-group-text-uniform bg-success text-white" style={{ width: "120px" }}>
+            <InputGroup.Text
+              className="input-group-text-uniform bg-success text-white"
+              style={{ width: "120px" }}
+            >
               Sex
             </InputGroup.Text>
             <Form.Control type="text" readOnly value={sex} />
           </InputGroup>
 
           <InputGroup className="mb-2">
-            <InputGroup.Text className="input-group-text-uniform bg-success text-white" style={{ width: "120px" }}>
+            <InputGroup.Text
+              className="input-group-text-uniform bg-success text-white"
+              style={{ width: "120px" }}
+            >
               Address
             </InputGroup.Text>
             <Form.Control type="text" readOnly value={address} />
           </InputGroup>
 
           <InputGroup className="mb-2">
-            <InputGroup.Text className="input-group-text-uniform bg-success text-white" style={{ width: "120px" }}>
+            <InputGroup.Text
+              className="input-group-text-uniform bg-success text-white"
+              style={{ width: "120px" }}
+            >
               Birthdate
             </InputGroup.Text>
             <Form.Control type="text" readOnly value={bdate} />
           </InputGroup>
 
           <InputGroup className="mb-2">
-            <InputGroup.Text className="input-group-text-uniform bg-success text-white" style={{ width: "120px" }}>
+            <InputGroup.Text
+              className="input-group-text-uniform bg-success text-white"
+              style={{ width: "120px" }}
+            >
               Phone No.
             </InputGroup.Text>
             <Form.Control type="text" readOnly value={contact} />
           </InputGroup>
 
           <InputGroup className="mb-3">
-            <InputGroup.Text className="input-group-text-uniform bg-success text-white" style={{ width: "120px" }}>
+            <InputGroup.Text
+              className="input-group-text-uniform bg-success text-white"
+              style={{ width: "120px" }}
+            >
               Status
             </InputGroup.Text>
             <Form.Control type="text" readOnly value={membership} />
@@ -103,16 +129,22 @@ const ClientInfoModal = ({ data, handleClose, show }) => {
           <div className="mb-2 text-primary fw-bold mt-4">
             Emergency Contact Details
           </div>
-          
+
           <InputGroup className="mb-2">
-            <InputGroup.Text className="input-group-text-uniform bg-warning text-dark" style={{ width: "120px" }}>
+            <InputGroup.Text
+              className="input-group-text-uniform bg-warning text-dark"
+              style={{ width: "120px" }}
+            >
               Name
             </InputGroup.Text>
             <Form.Control type="text" readOnly value={emName} />
           </InputGroup>
 
           <InputGroup className="mb-2">
-            <InputGroup.Text className="input-group-text-uniform bg-warning text-dark" style={{ width: "120px" }}>
+            <InputGroup.Text
+              className="input-group-text-uniform bg-warning text-dark"
+              style={{ width: "120px" }}
+            >
               Contact No
             </InputGroup.Text>
             <Form.Control type="text" readOnly value={emContact} />

@@ -36,6 +36,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       allowNull: false,
     },
+    qrCode: {
+      type: DataTypes.STRING(10),
+      allowNull: false,
+      unique: true,
+    },
   });
   ClientInfo.associate = (models) => {
     ClientInfo.hasMany(models.ClientSubscription);

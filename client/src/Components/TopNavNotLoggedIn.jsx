@@ -32,6 +32,9 @@ const TopNavNotLoggedIn = () => {
 
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
+              <Nav.Link onClick={() => navigate("/attendance")}>
+                Attendance
+              </Nav.Link>
               <Nav.Link onClick={() => navigate("/login")}>Login</Nav.Link>
               {/* <Nav.Link onClick={() => navigate("/register")}>
                 Register

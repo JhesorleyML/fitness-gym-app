@@ -8,6 +8,7 @@ const {
   ClientSubscription,
   EmergencyContact,
 } = require("../models");
+const { generateUniqueQRCode } = require("../utils/qrGenerator");
 
 //get the list of clients
 router.get("/", async (req, res, next) => {
@@ -24,6 +25,7 @@ router.get("/", async (req, res, next) => {
         "sex",
         "pic",
         "isMember",
+        "qrCode",
       ],
       include: { model: EmergencyContact, attributes: ["name", "contact"] },
       order: [["lastname", "ASC"], ["firstname"]],
@@ -117,6 +119,10 @@ router.post("/new", (req, res, next) => {
       } = clientData;
       const photo = req.file ? req.file.filename : "default.jpg";
       console.log(photo);
+      
+      // Generate unique 10-digit QR code
+      const qrCode = await generateUniqueQRCode();
+
       //save client info
       const client = await ClientInfo.create({
         firstname: firstname,
@@ -128,6 +134,7 @@ router.post("/new", (req, res, next) => {
         sex: sex,
         pic: photo,
         isMember: false,
+        qrCode: qrCode,
       });
       console.log(client);
       //save the emergency contact
@@ -147,49 +154,56 @@ router.post("/new", (req, res, next) => {
 });
 
 //update client info
-router.put("/update/:id", async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const {
-      fname,
-      lname,
-      mname,
-      address,
-      bdate,
-      contact,
-      sex,
-      pic,
-      ename,
-      econtact,
-    } = req.body;
-    //update clieninfo
-    const client = await ClientInfo.update(
-      {
-        firstname: fname,
-        lastname: lname,
-        middlename: mname,
-        address: address,
-        bdate: bdate,
-        contactno: contact,
-        sex: sex,
-        pic: pic,
-      },
-      { where: { id: id } }
-    );
-    //update client emercontact
-    const emergencyContact = await EmergencyContact.update(
-      {
-        name: ename,
-        contact: econtact,
-      },
-      { where: { ClientInfoId: id } }
-    );
-    res
-      .status(201)
-      .send({ message: `Successfully updated ${emergencyContact}` });
-  } catch (error) {
-    next(error);
-  }
+router.put("/update/:id", (req, res, next) => {
+  const upload = req.upload.single("pic");
+  upload(req, res, async (err) => {
+    if (err) {
+      return next(err);
+    }
+    try {
+      const { id } = req.params;
+      const {
+        fname,
+        lname,
+        mname,
+        address,
+        bdate,
+        contact,
+        sex,
+        ename,
+        econtact,
+      } = req.body;
+
+      // If a new file was uploaded, use its filename; otherwise, keep the old one (if passed)
+      const photo = req.file ? req.file.filename : req.body.pic;
+
+      //update clieninfo
+      await ClientInfo.update(
+        {
+          firstname: fname,
+          lastname: lname,
+          middlename: mname,
+          address: address,
+          bdate: bdate,
+          contactno: contact,
+          sex: sex,
+          pic: photo,
+        },
+        { where: { id: id } }
+      );
+      //update client emercontact
+      await EmergencyContact.update(
+        {
+          name: ename,
+          contact: econtact,
+        },
+        { where: { ClientInfoId: id } }
+      );
+      res.status(201).send({ message: `Successfully updated client information` });
+    } catch (error) {
+      next(error);
+    }
+  });
 });
 
 module.exports = router;

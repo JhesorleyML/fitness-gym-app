@@ -384,13 +384,13 @@ const AddClient = () => {
         <Breadcrumb.Item onClick={() => navigate("/clients")}>
           Clients
         </Breadcrumb.Item>
-        <Breadcrumb.Item href="#">Register</Breadcrumb.Item>
+        <Breadcrumb.Item href="#">Register New Gym Client</Breadcrumb.Item>
       </Breadcrumb>
       <Row>
         <Col md={{ span: 6, offset: 3 }}>
           <div className="new-account-form">
             <div className="client-header text-center">
-              <h1>Register New Client</h1>
+              <h1>Register New Gym Client</h1>
             </div>
             <Formik
               initialValues={initialValues}

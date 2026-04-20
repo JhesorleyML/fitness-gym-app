@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Button, Pagination, Table } from "react-bootstrap";
 import PropTypes from "prop-types";
-import { MdVisibility } from "react-icons/md";
+import { MdVisibility, MdQrCode, MdEdit } from "react-icons/md";
 import { format, differenceInDays, startOfDay } from "date-fns";
 import "./style.css";
+import QRModal from "./QRModal";
+import EditClientModal from "./EditClientModal";
 
 const ClientTable = ({
   listOfClients,
@@ -17,6 +19,29 @@ const ClientTable = ({
 
   //set the currentPage to page 1
   const [currentPage, setCurrentPage] = useState(1);
+  const [showQR, setShowQR] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [selectedClient, setSelectedClient] = useState(null);
+
+  const handleShowQR = (client) => {
+    setSelectedClient(client);
+    setShowQR(true);
+  };
+
+  const handleCloseQR = () => {
+    setShowQR(false);
+    setSelectedClient(null);
+  };
+
+  const handleShowEdit = (client) => {
+    setSelectedClient(client);
+    setShowEdit(true);
+  };
+
+  const handleCloseEdit = () => {
+    setShowEdit(false);
+    setSelectedClient(null);
+  };
 
   //calculate how many pages
   const totalPages = Math.ceil(listOfClients.length / entriesPerPage);
@@ -93,13 +118,34 @@ const ClientTable = ({
                 )}
                 {!isReport && (
                   <td>
-                    <Button
-                      variant="success"
-                      size="sm"
-                      onClick={() => handleViewDetails(client)}
-                    >
-                      <MdVisibility />
-                    </Button>
+                    <div className="d-flex gap-2">
+                      <Button
+                        variant="success"
+                        size="sm"
+                        title="View Details"
+                        onClick={() => handleViewDetails(client)}
+                      >
+                        <MdVisibility />
+                      </Button>
+                      <Button
+                        variant="warning"
+                        size="sm"
+                        title="Edit Client"
+                        className="text-dark"
+                        onClick={() => handleShowEdit(client)}
+                      >
+                        <MdEdit />
+                      </Button>
+                      <Button
+                        variant="info"
+                        size="sm"
+                        title="View QR Code"
+                        className="text-white"
+                        onClick={() => handleShowQR(client)}
+                      >
+                        <MdQrCode />
+                      </Button>
+                    </div>
                   </td>
                 )}
               </tr>
@@ -140,6 +186,18 @@ const ClientTable = ({
           disabled={currentPage === totalPages}
         />
       </Pagination>
+
+      <QRModal
+        show={showQR}
+        handleClose={handleCloseQR}
+        client={selectedClient}
+      />
+
+      <EditClientModal
+        show={showEdit}
+        handleClose={handleCloseEdit}
+        client={selectedClient}
+      />
     </>
   );
 };

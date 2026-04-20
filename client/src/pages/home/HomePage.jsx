@@ -91,7 +91,8 @@ const HomePage = () => {
           <div className="item">
             <img src={image1} alt="Workout Equipment" />
             <div className="content">
-              <div className="title">Benford Fitness Gym</div>
+              <div className="author">Benford Fitness Gym</div>
+              <div className="title">Gym Equipments</div>
               <div className="topic">Fitness Excellence</div>
               <div className="des">
                 At Benford Fitness Gym, we offer cutting-edge workout equipment
