@@ -15,9 +15,10 @@ import { differenceInDays, format, isEqual, startOfDay } from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import MonthlyReportTable from "./MonthlyReportTable";
-import { MdHome } from "react-icons/md";
+import { MdHome, MdPrint } from "react-icons/md";
 import { useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useReactToPrint } from "react-to-print";
 
 const PaymentReports = () => {
   let navigate = useNavigate();
@@ -85,8 +86,8 @@ const PaymentReports = () => {
           return d >= startOfDay(dateFrom) && d <= startOfDay(dateTo);
         });
         break;
-      case 4: // Create full list of year-month keys // MONTHLY
-      {
+      case 4: {
+        // Create full list of year-month keys // MONTHLY
         for (let month = 1; month <= 12; month++) {
           monthly.push({
             month: `${filterYear}-${String(month).padStart(2, "0")}`,
@@ -116,10 +117,18 @@ const PaymentReports = () => {
       0,
     );
 
-    const formattedTotal = new Intl.NumberFormat("en-US", {
+    const formattedTotal = new Intl.NumberFormat("en-PH", {
       style: "currency",
       currency: "PHP",
+      minimumFractionDigits: 2,
     }).format(total);
+
+    // const currencyFormatter = new Intl.NumberFormat("en-PH", {
+    //   style: "currency",
+    //   currency: "PHP",
+    //   minimumFractionDigits: 2,
+    //   maximumFractionDigits: 2,
+    // });
 
     return {
       filteredPayments: filtered,
@@ -128,27 +137,16 @@ const PaymentReports = () => {
     };
   }, [filterType, formattedPayments, dateFrom, dateTo, filterYear]);
 
-  const handlePrint = () => {
-    setShowAllPages(true);
-    setTimeout(() => {
-      const printContent = reportRef.current;
-      const windowPrint = window.open("", "", "width=900,height=650");
-      windowPrint.document.write("<html><head><title>Print Report</title>");
-      windowPrint.document.write(
-        '<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">',
-      );
-      windowPrint.document.write("</head><body>");
-      windowPrint.document.write(
-        "<div class='text-center'><h1>BENFOR FITNESS GYM<h1></div>",
-      );
-      windowPrint.document.write(printContent.innerHTML);
-      windowPrint.document.write("</body></html>");
-      windowPrint.document.close();
-      windowPrint.focus();
-      windowPrint.print();
-      setShowAllPages(false);
-    }, 500);
-  };
+  const handlePrint = useReactToPrint({
+    contentRef: reportRef,
+    onBeforeGetContent: () => {
+      setShowAllPages(true);
+      return new Promise((resolve) => {
+        setTimeout(resolve, 500); // Wait for pagination to expand
+      });
+    },
+    onAfterPrint: () => setShowAllPages(false),
+  });
 
   if (isError)
     return (
@@ -168,7 +166,7 @@ const PaymentReports = () => {
         <Breadcrumb.Item href="#">Payments</Breadcrumb.Item>
       </Breadcrumb>
 
-      <Row className="mb-3">
+      <Row className="mb-3 no-print">
         <Col md={3}>
           <InputGroup>
             <InputGroup.Text className="bg-info text-white">
@@ -221,6 +219,12 @@ const PaymentReports = () => {
                 <option value="2026">2026</option>
                 <option value="2025">2025</option>
                 <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+                <option value="2021">2021</option>
+                <option value="2020">2020</option>
+                <option value="2019">2019</option>
+                <option value="2018">2018</option>
               </Form.Select>
             </InputGroup>
           )}
@@ -232,6 +236,7 @@ const PaymentReports = () => {
             onClick={handlePrint}
             disabled={isLoading}
           >
+            <MdPrint className="me-2" />
             Print Report
           </Button>
         </Col>
@@ -242,25 +247,30 @@ const PaymentReports = () => {
           <Spinner animation="border" variant="primary" />
         </div>
       ) : (
-        <div ref={reportRef} className="mt-3">
-          <div className="report-title text-center">
-            <h3>Payment Reports</h3>
+        <div ref={reportRef} className="p-4 bg-white">
+          <div className="text-center mb-4">
+            <h1 className="fw-bold">BENFORD FITNESS GYM</h1>
+            <h3 className="text-muted">Payment Reports</h3>
             {filterType === "3" && (
               <h6>
                 Range: {format(dateFrom, "MMMM d, yyyy")} to{" "}
                 {format(dateTo, "MMMM d, yyyy")}
               </h6>
             )}
+            {filterType === "4" && <h6>Year: {filterYear}</h6>}
+            <hr />
           </div>
-          <Row className="mb-2 fw-bold">
+
+          <Row className="mb-3 fw-bold">
             <Col>
               No. of Records:{" "}
               {filterType === "4"
                 ? monthlyData.length
                 : filteredPayments.length}
             </Col>
-            <Col className="text-end">Total: {totalAmount}</Col>
+            <Col className="text-end text-primary">Total: {totalAmount}</Col>
           </Row>
+
           {filterType === "4" ? (
             <MonthlyReportTable data={monthlyData} />
           ) : (

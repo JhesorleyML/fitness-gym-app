@@ -95,7 +95,7 @@ const AttendanceLogs = () => {
                     <td>{index + 1}</td>
                     <td>
                       <img
-                        src={log.ClientInfo.pic || "/default-account.jpg"}
+                        src={log.ClientInfo.pic || "/default.jpg"}
                         alt="Profile"
                         className="rounded-circle border"
                         style={{

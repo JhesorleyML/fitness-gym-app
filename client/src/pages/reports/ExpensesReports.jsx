@@ -11,13 +11,14 @@ import {
   Spinner,
 } from "react-bootstrap";
 import DatePicker from "react-datepicker";
-import { MdHome } from "react-icons/md";
+import { MdHome, MdPrint } from "react-icons/md";
 import { useNavigate } from "react-router";
 import ExpenseTable from "../expenses/ExpenseTable";
 import MonthlyReportTable from "./MonthlyReportTable";
 import { differenceInDays, isEqual, startOfDay, format } from "date-fns";
 import "react-datepicker/dist/react-datepicker.css";
 import { useQuery } from "@tanstack/react-query";
+import { useReactToPrint } from "react-to-print";
 
 const ExpensesReports = () => {
   let navigate = useNavigate();
@@ -100,9 +101,10 @@ const ExpensesReports = () => {
       0,
     );
 
-    const formattedTotal = new Intl.NumberFormat("en-US", {
+    const formattedTotal = new Intl.NumberFormat("en-PH", {
       style: "currency",
       currency: "PHP",
+      minimumFractionDigits: 2,
     }).format(total);
 
     return {
@@ -112,27 +114,16 @@ const ExpensesReports = () => {
     };
   }, [filterType, rawExpenses, dateFrom, dateTo, filterYear]);
 
-  const handlePrint = () => {
-    setShowAllPages(true);
-    setTimeout(() => {
-      const printContent = reportRef.current;
-      const windowPrint = window.open("", "", "width=900,height=650");
-      windowPrint.document.write("<html><head><title>Print Report</title>");
-      windowPrint.document.write(
-        '<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">',
-      );
-      windowPrint.document.write("</head><body>");
-      windowPrint.document.write(
-        "<div class='text-center'><h1>BENFORD FITNESS GYM<h1></div>",
-      );
-      windowPrint.document.write(printContent.innerHTML);
-      windowPrint.document.write("</body></html>");
-      windowPrint.document.close();
-      windowPrint.focus();
-      windowPrint.print();
-      setShowAllPages(false);
-    }, 500);
-  };
+  const handlePrint = useReactToPrint({
+    contentRef: reportRef,
+    onBeforeGetContent: () => {
+      setShowAllPages(true);
+      return new Promise((resolve) => {
+        setTimeout(resolve, 500);
+      });
+    },
+    onAfterPrint: () => setShowAllPages(false),
+  });
 
   if (isError)
     return (
@@ -152,7 +143,7 @@ const ExpensesReports = () => {
         <Breadcrumb.Item href="#">Expenses</Breadcrumb.Item>
       </Breadcrumb>
 
-      <Row className="mb-3">
+      <Row className="mb-3 no-print">
         <Col md={3}>
           <InputGroup>
             <InputGroup.Text className="bg-info text-white">
@@ -216,6 +207,7 @@ const ExpensesReports = () => {
             onClick={handlePrint}
             disabled={isLoading}
           >
+            <MdPrint className="me-2" />
             Print Report
           </Button>
         </Col>
@@ -226,16 +218,22 @@ const ExpensesReports = () => {
           <Spinner animation="border" variant="primary" />
         </div>
       ) : (
-        <div ref={reportRef} className="mt-3">
-          <div className="report-title text-center">
-            <h3>Expense Reports</h3>
+        <div ref={reportRef} className="p-4 bg-white">
+          <div className="text-center mb-4">
+            <h1 className="fw-bold">BENFORD FITNESS GYM</h1>
+            <h3 className="text-muted">Expense Reports</h3>
             {filterType === "3" && (
               <h6>
                 From: {format(dateFrom, "MMMM d, yyyy")} To{" "}
                 {format(dateTo, "MMMM d, yyyy")}
               </h6>
             )}
+            {filterType === "4" && (
+              <h6>Year: {filterYear}</h6>
+            )}
+            <hr />
           </div>
+          
           <Row className="mb-2 fw-bold">
             <Col>
               No. of Records:{" "}
@@ -243,7 +241,7 @@ const ExpensesReports = () => {
                 ? monthlyData.length
                 : filteredExpenses.length}
             </Col>
-            <Col className="text-end">Total: {totalAmount}</Col>
+            <Col className="text-end text-danger">Total: {totalAmount}</Col>
           </Row>
           {filterType === "4" ? (
             <MonthlyReportTable data={monthlyData} />

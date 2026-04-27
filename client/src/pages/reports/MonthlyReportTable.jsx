@@ -2,7 +2,14 @@ import { Table } from "react-bootstrap";
 import PropTypes from "prop-types";
 
 const MonthlyReportTable = ({ data }) => {
-  //console.log(data);
+  // Currency Formatter
+  const currencyFormatter = new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
   //separate map and year func
   const separateYearMonth = (monthYear) => {
     const [year, month] = monthYear.split("-");
@@ -30,7 +37,7 @@ const MonthlyReportTable = ({ data }) => {
             <tr key={key}>
               <td>{key + 1}</td>
               <td>{getMonthNameIntl(month)}</td>
-              <td>{monthlyPayment.amount}</td>
+              <td>{currencyFormatter.format(monthlyPayment.amount)}</td>
             </tr>
           );
         })}

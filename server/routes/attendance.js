@@ -39,6 +39,10 @@ router.get("/", async (req, res, next) => {
 
 // Post scan for Check-In/Out
 router.post("/scan", async (req, res, next) => {
+  //get the host and protocol for constructing image URLs
+  const host = req.get("host");
+  const protocol = req.protocol;
+
   try {
     const { qrCode } = req.body;
 
@@ -68,17 +72,18 @@ router.post("/scan", async (req, res, next) => {
 
     if (!activeSub) {
       return res.status(403).json({
-        message: "Client does not have an active session left. Please proceed to the attendant for subscription payment",
+        message:
+          "Client does not have an active session left. Please proceed to the attendant for subscription payment",
         client: {
           fullname: `${client.firstname} ${client.lastname}`,
-          pic: client.pic,
+          pic: `${protocol}://${host}/uploads/${client.pic}`,
         },
       });
     }
 
     // Step 3: Check-In/Out Toggle logic
     const todayDate = format(new Date(), "yyyy-MM-dd");
-    
+
     // Find active attendance record (checked in but not checked out) for TODAY
     const activeAttendance = await Attendance.findOne({
       where: {
@@ -98,7 +103,7 @@ router.post("/scan", async (req, res, next) => {
         type: "OUT",
         client: {
           fullname: `${client.firstname} ${client.lastname}`,
-          pic: client.pic,
+          pic: `${protocol}://${host}/uploads/${client.pic}`,
           expiry: activeSub.dateend,
         },
       });
@@ -114,7 +119,7 @@ router.post("/scan", async (req, res, next) => {
         type: "IN",
         client: {
           fullname: `${client.firstname} ${client.lastname}`,
-          pic: client.pic,
+          pic: `${protocol}://${host}/uploads/${client.pic}`,
           expiry: activeSub.dateend,
         },
       });

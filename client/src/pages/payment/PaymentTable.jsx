@@ -2,7 +2,6 @@ import PropTypes from "prop-types";
 import { useState } from "react";
 import { Button, Pagination, Table } from "react-bootstrap";
 import { MdVisibility } from "react-icons/md";
-import { format } from "date-fns";
 
 const PaymentTable = ({
   listOfPayments,
@@ -16,14 +15,18 @@ const PaymentTable = ({
   // Logic for client-side pagination fallback (used in reports)
   const [localPage, setLocalPage] = useState(1);
   const itemsPerPage = 10;
-  
+
   // If we're NOT using server-side pagination (i.e., onPageChange is not provided)
   const isServerSide = !!onPageChange;
   const activePage = isServerSide ? currentPage : localPage;
-  
-  const displayPayments = (isServerSide || showAllPages) 
-    ? listOfPayments 
-    : listOfPayments.slice((activePage - 1) * itemsPerPage, activePage * itemsPerPage);
+
+  const displayPayments =
+    isServerSide || showAllPages
+      ? listOfPayments
+      : listOfPayments.slice(
+          (activePage - 1) * itemsPerPage,
+          activePage * itemsPerPage,
+        );
 
   const localTotalPages = Math.ceil(listOfPayments.length / itemsPerPage);
   const finalTotalPages = isServerSide ? totalPages : localTotalPages;
@@ -35,6 +38,13 @@ const PaymentTable = ({
       setLocalPage(pageNum);
     }
   };
+
+  const currencyFormatter = new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   return (
     <>
@@ -51,18 +61,19 @@ const PaymentTable = ({
         <tbody>
           {displayPayments.length > 0 ? (
             displayPayments.map((payment, index) => {
-              const rowNumber = isServerSide 
+              const rowNumber = isServerSide
                 ? index + 1 + (activePage - 1) * 10
                 : index + 1 + (activePage - 1) * itemsPerPage;
-              
+
               return (
                 <tr key={payment.id || index}>
                   <td className="text-end">{rowNumber}</td>
                   <td>{payment.fullname}</td>
                   <td className="text-end">
-                    {parseFloat(payment.amount).toLocaleString(undefined, {
+                    {/* {parseFloat(payment.amount).toLocaleString(undefined, {
                       minimumFractionDigits: 2,
-                    })}
+                    })} */}
+                    {currencyFormatter.format(parseFloat(payment.amount) || 0)}
                   </td>
                   <td>{payment.formattedDate}</td>
                   {!isReport && (
@@ -98,7 +109,7 @@ const PaymentTable = ({
             onClick={() => handlePageClick(activePage - 1)}
             disabled={activePage === 1}
           />
-          
+
           {/* Show a range of pages if there are many */}
           {[...Array(finalTotalPages)].map((_, i) => {
             const pageNum = i + 1;

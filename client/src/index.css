@@ -15,3 +15,30 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+@media print {
+  .no-print, 
+  .breadcrumb, 
+  .navbar, 
+  footer, 
+  .banner,
+  button:not(.print-only) {
+    display: none !important;
+  }
+
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  .container {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .bg-white {
+    background-color: white !important;
+  }
+}

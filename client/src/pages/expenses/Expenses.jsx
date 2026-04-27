@@ -89,14 +89,17 @@ const Expenses = () => {
   // Use TanStack Query
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["expenses", currentPage, searchKey, limit],
-    queryFn: () => 
-      axios.get(`/api/expenses?page=${currentPage}&limit=${limit}&search=${searchKey}`)
-        .then(res => res.data),
+    queryFn: () =>
+      axios
+        .get(
+          `/api/expenses?page=${currentPage}&limit=${limit}&search=${searchKey}`,
+        )
+        .then((res) => res.data),
   });
 
   // Mutation for adding new expense
   const mutation = useMutation({
-    mutationFn: (newExpense) => 
+    mutationFn: (newExpense) =>
       axios.post("/api/expenses/new", newExpense, {
         headers: { "Content-Type": "multipart/form-data" },
       }),
@@ -108,7 +111,7 @@ const Expenses = () => {
     },
     onError: (error) => {
       alert(error.response?.data?.message || "An error occurred");
-    }
+    },
   });
 
   const handleSearch = (e) => {
@@ -142,7 +145,7 @@ const Expenses = () => {
       onSettled: () => {
         setSubmitting(false);
         resetForm();
-      }
+      },
     });
   };
 
@@ -167,7 +170,10 @@ const Expenses = () => {
     }
   };
 
-  if (isError) return <div className="text-center text-danger p-5">Error: {error.message}</div>;
+  if (isError)
+    return (
+      <div className="text-center text-danger p-5">Error: {error.message}</div>
+    );
 
   const listOfExpenses = data?.expenses || [];
   const totalPages = data?.totalPages || 0;
@@ -342,7 +348,6 @@ const Expenses = () => {
                     onChange={handleChange}
                     isInvalid={touched.amount && !!errors.amount}
                   />
-                  <InputGroup.Text>.00</InputGroup.Text>
                   <Form.Control.Feedback type="invalid">
                     {errors.amount}
                   </Form.Control.Feedback>

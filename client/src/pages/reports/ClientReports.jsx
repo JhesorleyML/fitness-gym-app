@@ -10,9 +10,10 @@ import {
 } from "react-bootstrap";
 import axios from "axios";
 import ClientTable from "../../Components/ClientTable";
-import { MdHome } from "react-icons/md";
+import { MdHome, MdPrint } from "react-icons/md";
 import { useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useReactToPrint } from "react-to-print";
 
 const ClientReports = () => {
   let navigate = useNavigate();
@@ -49,27 +50,16 @@ const ClientReports = () => {
     setIsActive((prevState) => !prevState);
   };
 
-  const handlePrint = () => {
-    setShowAllPages(true);
-    setTimeout(() => {
-      const printContent = reportRef.current;
-      const windowPrint = window.open("", "", "width=900,height=650");
-      windowPrint.document.write("<html><head><title>Print Report</title>");
-      windowPrint.document.write(
-        '<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">',
-      );
-      windowPrint.document.write("</head><body>");
-      windowPrint.document.write(
-        "<div class='text-center'><h1>BENFORD FITNESS GYM<h1></div>",
-      );
-      windowPrint.document.write(printContent.innerHTML);
-      windowPrint.document.write("</body></html>");
-      windowPrint.document.close();
-      windowPrint.focus();
-      windowPrint.print();
-      setShowAllPages(false);
-    }, 500);
-  };
+  const handlePrint = useReactToPrint({
+    contentRef: reportRef,
+    onBeforeGetContent: () => {
+      setShowAllPages(true);
+      return new Promise((resolve) => {
+        setTimeout(resolve, 500);
+      });
+    },
+    onAfterPrint: () => setShowAllPages(false),
+  });
 
   if (isError)
     return (
@@ -89,7 +79,7 @@ const ClientReports = () => {
         <Breadcrumb.Item href="#">Clients</Breadcrumb.Item>
       </Breadcrumb>
 
-      <Row className="mb-3">
+      <Row className="mb-3 no-print">
         <Col md={4}>
           <Form.Check
             type="switch"
@@ -115,6 +105,7 @@ const ClientReports = () => {
             onClick={handlePrint}
             disabled={isLoading}
           >
+            <MdPrint className="me-2" />
             Print Report
           </Button>
         </Col>
@@ -125,16 +116,20 @@ const ClientReports = () => {
           <Spinner animation="border" variant="primary" />
         </div>
       ) : (
-        <div ref={reportRef} className="mt-3">
-          <div className="report-title text-center">
-            <h3>
+        <div ref={reportRef} className="p-4 bg-white">
+          <div className="text-center mb-4">
+            <h1 className="fw-bold">BENFORD FITNESS GYM</h1>
+            <h3 className="text-muted">Client Reports</h3>
+            <h5 className="text-secondary">
               {isMember
                 ? `List of Gym Clients with Memberships`
                 : `List of Gym Clients without Memberships`}
-            </h3>
+            </h5>
+            <hr />
           </div>
+
           <div className="mb-2 fw-bold">
-            No of Records: {filteredClients.length}
+            No. of Records: {filteredClients.length}
           </div>
           <ClientTable
             listOfClients={filteredClients}

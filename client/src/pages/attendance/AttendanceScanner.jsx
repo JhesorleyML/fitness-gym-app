@@ -10,14 +10,14 @@ const AttendanceScanner = () => {
   const [error, setError] = useState(null);
   const [lastScannedCode, setLastScannedCode] = useState("");
 
-  // Clear status after 8 seconds
+  // Clear status after 10 seconds
   useEffect(() => {
     if (scanResult || error) {
       const timer = setTimeout(() => {
         setScanResult(null);
         setError(null);
         setLastScannedCode("");
-      }, 8000);
+      }, 20000);
       return () => clearTimeout(timer);
     }
   }, [scanResult, error]);
@@ -35,6 +35,7 @@ const AttendanceScanner = () => {
       const response = await axios.post("/api/attendance/scan", {
         qrCode: code,
       });
+      //console.log("Scan Response:", response.data);
       setScanResult(response.data);
     } catch (err) {
       console.error(err);
@@ -108,11 +109,7 @@ const AttendanceScanner = () => {
                   {error.client && (
                     <div className="mt-3">
                       <img
-                        src={
-                          error.client.pic
-                            ? `/uploads/${error.client.pic}`
-                            : "/default-account.jpg"
-                        }
+                        src={error.client.pic || "/default-account.jpg"}
                         alt="Client"
                         className="rounded-circle mb-3 shadow"
                         style={{
@@ -134,11 +131,7 @@ const AttendanceScanner = () => {
                   </Alert>
                   <div className="mt-3">
                     <img
-                      src={
-                        scanResult.client.pic
-                          ? `/uploads/${scanResult.client.pic}`
-                          : "/default-account.jpg"
-                      }
+                      src={scanResult.client.pic || "/default-account.jpg"}
                       alt="Client"
                       className="rounded-circle mb-3 shadow"
                       style={{

@@ -15,7 +15,7 @@ import AddClient from "./pages/clientinfo/AddClient";
 import Footer from "./Components/Footer";
 import Payment from "./pages/payment/Payment";
 import ProtectedRoute from "./helpers/ProtectedRoute";
-import Reports from "./pages/reports/Reports";
+// import Reports from "./pages/reports/Reports";
 import PaymentReports from "./pages/reports/PaymentReports";
 import ClientReports from "./pages/reports/ClientReports";
 import HomePage from "./pages/home/HomePage";
@@ -147,7 +147,7 @@ function App() {
                   />
                 }
               />
-              <Route
+              {/* <Route
                 path="/reports"
                 element={
                   <ProtectedRoute
@@ -155,7 +155,7 @@ function App() {
                     component={<Reports userId={authState.id} />}
                   />
                 }
-              />
+              /> */}
               <Route
                 path="/reports/payments"
                 element={

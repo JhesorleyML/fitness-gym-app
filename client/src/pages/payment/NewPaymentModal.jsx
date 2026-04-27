@@ -3,7 +3,12 @@ import { Button, Form, InputGroup, Modal, Spinner } from "react-bootstrap";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
-import { MdCategory, MdEvent, MdMonetizationOn, MdPerson2 } from "react-icons/md";
+import {
+  MdCategory,
+  MdEvent,
+  MdMonetizationOn,
+  MdPerson2,
+} from "react-icons/md";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -19,31 +24,29 @@ const initialValues = {
   subsId: "",
   amount: "",
   paymentDate: new Date().toISOString().split("T")[0],
+  waived: false,
 };
 
-const NewPaymentModal = ({
-  show,
-  handleClose,
-  userId,
-}) => {
+const NewPaymentModal = ({ show, handleClose, userId }) => {
   const queryClient = useQueryClient();
   const [duration, setDuration] = useState("");
 
   // Use TanStack Query for dependencies
   const { data: clients = [], isLoading: loadingClients } = useQuery({
     queryKey: ["clientsForSelect"],
-    queryFn: () => axios.get("/api/clients/").then(res => 
-      res.data.map(c => ({
-        id: c.id,
-        fullname: `${c.firstname} ${c.middlename} ${c.lastname}`
-      }))
-    ),
+    queryFn: () =>
+      axios.get("/api/clients/").then((res) =>
+        res.data.map((c) => ({
+          id: c.id,
+          fullname: `${c.firstname} ${c.middlename} ${c.lastname}`,
+        })),
+      ),
     enabled: show, // Only fetch when modal is open
   });
 
   const { data: categories = [], isLoading: loadingCategories } = useQuery({
     queryKey: ["subscriptionCategories"],
-    queryFn: () => axios.get("/api/subscriptions/").then(res => res.data),
+    queryFn: () => axios.get("/api/subscriptions/").then((res) => res.data),
     enabled: show,
   });
 
@@ -59,7 +62,7 @@ const NewPaymentModal = ({
     },
     onError: (error) => {
       alert(error.response?.data?.message || "An error occurred");
-    }
+    },
   });
 
   const handleSubsChange = (event, { setFieldValue }) => {
@@ -69,6 +72,7 @@ const NewPaymentModal = ({
     );
     setFieldValue("subsId", selectedId);
     setFieldValue("amount", selectedCategory?.amount || "");
+    setFieldValue("waived", false); // Reset waived status when subscription type changes
     setDuration(selectedCategory?.duration || "");
   };
 
@@ -85,7 +89,7 @@ const NewPaymentModal = ({
       onSettled: () => {
         setSubmitting(false);
         resetForm();
-      }
+      },
     });
   };
 
@@ -121,7 +125,10 @@ const NewPaymentModal = ({
                 {/**Client Name */}
                 <Form.Label className="label-left">Client Name</Form.Label>
                 <InputGroup className="mb-3">
-                  <InputGroup.Text id="name-addon" className="bg-info text-white">
+                  <InputGroup.Text
+                    id="name-addon"
+                    className="bg-info text-white"
+                  >
                     <MdPerson2 />
                   </InputGroup.Text>
                   <Form.Select
@@ -146,14 +153,21 @@ const NewPaymentModal = ({
                 </InputGroup>
 
                 {/**Subscription */}
-                <Form.Label className="label-left">Subscription Type</Form.Label>
+                <Form.Label className="label-left">
+                  Subscription Type
+                </Form.Label>
                 <InputGroup className="mb-3">
-                  <InputGroup.Text id="subs-addon" className="bg-info text-white">
+                  <InputGroup.Text
+                    id="subs-addon"
+                    className="bg-info text-white"
+                  >
                     <MdCategory />
                   </InputGroup.Text>
                   <Form.Select
                     name="subsId"
-                    onChange={(event) => handleSubsChange(event, { setFieldValue })}
+                    onChange={(event) =>
+                      handleSubsChange(event, { setFieldValue })
+                    }
                     value={values.subsId}
                     onBlur={handleBlur}
                     isInvalid={touched.subsId && !!errors.subsId}
@@ -175,7 +189,10 @@ const NewPaymentModal = ({
                 {/**Payment Date */}
                 <Form.Label className="label-left">Payment Date</Form.Label>
                 <InputGroup className="mb-3">
-                  <InputGroup.Text id="date-addon" className="bg-info text-white">
+                  <InputGroup.Text
+                    id="date-addon"
+                    className="bg-info text-white"
+                  >
                     <MdEvent />
                   </InputGroup.Text>
                   <Form.Control
@@ -191,10 +208,36 @@ const NewPaymentModal = ({
                   </Form.Control.Feedback>
                 </InputGroup>
 
+                {/** Waive Payment Checkbox */}
+                <Form.Group className="mb-3" controlId="waiveCheckbox">
+                  <Form.Check
+                    type="checkbox"
+                    label="Waive Payment (Set amount to 0)"
+                    name="waived"
+                    checked={values.waived}
+                    onChange={(e) => {
+                      const isChecked = e.target.checked;
+                      setFieldValue("waived", isChecked);
+                      if (isChecked) {
+                        setFieldValue("amount", 0);
+                      } else {
+                        // Restore amount based on selected category
+                        const selectedCategory = categories.find(
+                          (subs) => subs.id.toString() === values.subsId,
+                        );
+                        setFieldValue("amount", selectedCategory?.amount || "");
+                      }
+                    }}
+                  />
+                </Form.Group>
+
                 {/**Amount field */}
                 <Form.Label className="label-left">Amount</Form.Label>
                 <InputGroup className="mb-3">
-                  <InputGroup.Text id="amount-addon" className="bg-info text-white">
+                  <InputGroup.Text
+                    id="amount-addon"
+                    className="bg-info text-white"
+                  >
                     <MdMonetizationOn />
                   </InputGroup.Text>
                   <Form.Control

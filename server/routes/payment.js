@@ -44,14 +44,20 @@ router.get("/", async (req, res, next) => {
         include: [
           {
             model: ClientInfo,
-            attributes: ["firstname", "middlename", "lastname"],
-            where: search ? {
-              [Op.or]: [
-                { firstname: { [Op.like]: `%${search}%` } },
-                { lastname: { [Op.like]: `%${search}%` } },
-                { middlename: { [Op.like]: `%${search}%` } },
-              ]
-            } : null
+            attributes: [
+              "firstname",
+              [sequelize.literal("SUBSTRING(middlename, 1, 1)"), "middlename"],
+              "lastname",
+            ],
+            where: search
+              ? {
+                  [Op.or]: [
+                    { firstname: { [Op.like]: `%${search}%` } },
+                    { lastname: { [Op.like]: `%${search}%` } },
+                    { middlename: { [Op.like]: `%${search}%` } },
+                  ],
+                }
+              : null,
           },
           { model: Subscription, attributes: ["category"] },
         ],

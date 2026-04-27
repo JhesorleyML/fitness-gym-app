@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import { useState } from "react";
 import { Button, Pagination, Table } from "react-bootstrap";
-import { MdDelete, MdEdit, MdVisibility } from "react-icons/md";
+import { MdVisibility } from "react-icons/md";
 import { format } from "date-fns";
 
 const ExpenseTable = ({
@@ -16,14 +16,18 @@ const ExpenseTable = ({
   // Logic for client-side pagination fallback (used in reports)
   const [localPage, setLocalPage] = useState(1);
   const itemsPerPage = 10;
-  
+
   // If we're NOT using server-side pagination (i.e., onPageChange is not provided)
   const isServerSide = !!onPageChange;
   const activePage = isServerSide ? currentPage : localPage;
-  
-  const displayExpenses = (isServerSide || showAllPages) 
-    ? listOfExpenses 
-    : listOfExpenses.slice((activePage - 1) * itemsPerPage, activePage * itemsPerPage);
+
+  const displayExpenses =
+    isServerSide || showAllPages
+      ? listOfExpenses
+      : listOfExpenses.slice(
+          (activePage - 1) * itemsPerPage,
+          activePage * itemsPerPage,
+        );
 
   const localTotalPages = Math.ceil(listOfExpenses.length / itemsPerPage);
   const finalTotalPages = isServerSide ? totalPages : localTotalPages;
@@ -35,6 +39,13 @@ const ExpenseTable = ({
       setLocalPage(pageNum);
     }
   };
+
+  const currencyFormatter = new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   return (
     <>
@@ -52,8 +63,11 @@ const ExpenseTable = ({
         <tbody>
           {displayExpenses.length > 0 ? (
             displayExpenses.map((expense, index) => {
-              const formattedDate = format(new Date(expense.expdate), "MMMM d, yyyy");
-              const rowNumber = isServerSide 
+              const formattedDate = format(
+                new Date(expense.expdate),
+                "MMMM d, yyyy",
+              );
+              const rowNumber = isServerSide
                 ? index + 1 + (activePage - 1) * 10
                 : index + 1 + (activePage - 1) * itemsPerPage;
 
@@ -63,9 +77,10 @@ const ExpenseTable = ({
                   <td>{expense.title}</td>
                   <td>{expense.category}</td>
                   <td className="text-end">
-                    {parseFloat(expense.amount).toLocaleString(undefined, {
+                    {/* {parseFloat(expense.amount).toLocaleString(undefined, {
                       minimumFractionDigits: 2,
-                    })}
+                    })} */}
+                    {currencyFormatter.format(parseFloat(expense.amount) || 0)}
                   </td>
                   <td>{formattedDate}</td>
                   {!isReport && (
