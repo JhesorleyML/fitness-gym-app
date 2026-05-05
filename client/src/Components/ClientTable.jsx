@@ -92,7 +92,7 @@ const ClientTable = ({
             if (isSubList && client.dateend) {
               const daysLeft = differenceInDays(
                 startOfDay(new Date(client.dateend)),
-                startOfDay(new Date())
+                startOfDay(new Date()),
               );
 
               if (daysLeft <= 2) {
@@ -153,40 +153,41 @@ const ClientTable = ({
           })}
         </tbody>
       </Table>
-      <Pagination className="justify-content-center">
-        {/**First Page */}
-        <Pagination.First
-          onClick={() => handlePageChange(1)}
-          disabled={currentPage === 1}
-        />
-        {/**Previous Page */}
-        <Pagination.Prev
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        />
-        {/**Numbered Pages */}
-        {Array.from({ length: totalPages }, (_, i) => (
-          <Pagination.Item
-            key={i + 1}
-            active={i + 1 === currentPage}
-            onClick={() => handlePageChange(i + 1)}
-          >
-            {i + 1}
-          </Pagination.Item>
-        ))}
+      {!showAllPages && totalPages > 1 && (
+        <Pagination className="justify-content-center">
+          {/**First Page */}
+          <Pagination.First
+            onClick={() => handlePageChange(1)}
+            disabled={currentPage === 1}
+          />
+          {/**Previous Page */}
+          <Pagination.Prev
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          />
+          {/**Numbered Pages */}
+          {Array.from({ length: totalPages }, (_, i) => (
+            <Pagination.Item
+              key={i + 1}
+              active={i + 1 === currentPage}
+              onClick={() => handlePageChange(i + 1)}
+            >
+              {i + 1}
+            </Pagination.Item>
+          ))}
 
-        {/**Next Page */}
-        <Pagination.Next
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        />
-        {/**Last Page */}
-        <Pagination.Last
-          onClick={() => handlePageChange(totalPages)}
-          disabled={currentPage === totalPages}
-        />
-      </Pagination>
-
+          {/**Next Page */}
+          <Pagination.Next
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          />
+          {/**Last Page */}
+          <Pagination.Last
+            onClick={() => handlePageChange(totalPages)}
+            disabled={currentPage === totalPages}
+          />
+        </Pagination>
+      )}
       <QRModal
         show={showQR}
         handleClose={handleCloseQR}

@@ -57,7 +57,7 @@ router.post(
 router.post("/login", async (req, res, next) => {
   try {
     const { username, password } = req.body;
-    console.log(req.body);
+    // console.log(req.body);
     const user = await User.findOne({
       attributes: [
         "id",
@@ -74,7 +74,7 @@ router.post("/login", async (req, res, next) => {
     if (!user) {
       return res.send({ error: "Invalid Username or Password" });
     }
-    console.log(user);
+    // console.log(user);
     //else  if username is found compare the password and the hash
     const match = await bcrypt.compare(password, user.password);
     //if not match

@@ -31,7 +31,8 @@ const Dashboard = () => {
   // Use TanStack Query for all server-side data
   const { data: listOfClients = [], isLoading: loadingClients } = useQuery({
     queryKey: ["activeClients"],
-    queryFn: () => axios.get("/api/clientsubs/active/all").then((res) => res.data),
+    queryFn: () =>
+      axios.get("/api/clientsubs/active/all").then((res) => res.data),
   });
 
   const { data: listOfPayments = [], isLoading: loadingPayments } = useQuery({
@@ -127,7 +128,8 @@ const Dashboard = () => {
     return reportData;
   }, [currentDate, listOfPayments]);
 
-  const isLoading = loadingClients || loadingPayments || loadingMembers || loadingExpenses;
+  const isLoading =
+    loadingClients || loadingPayments || loadingMembers || loadingExpenses;
 
   if (isLoading) {
     return (
@@ -190,16 +192,16 @@ const Dashboard = () => {
         </Col>
       </Row>
       <Row className="mt-3">
-        <div className="div mb-2 mt-2">Subscription Payments</div>
+        <div className="div mb-2 mt-2">Gym Payments</div>
       </Row>
       <Row>
         <Col md={8} className="mb-3">
           <SubPaymentChart tableData={paymentData} />
         </Col>
         <Col md={4} className="mb-3">
-          <ExpensesChart 
-            paymentData={listOfPayments} 
-            expensesData={listOfExpenses} 
+          <ExpensesChart
+            paymentData={listOfPayments}
+            expensesData={listOfExpenses}
           />
         </Col>
       </Row>

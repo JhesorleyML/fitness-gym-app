@@ -199,8 +199,9 @@ const EditClientModal = ({ show, handleClose, client }) => {
                           isInvalid={touched.sex && !!errors.sex}
                         >
                           <option value="">Select Sex</option>
-                          <option value="male">Male</option>
-                          <option value="female">Female</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
                         </Form.Select>
                       </Form.Group>
                     </Col>

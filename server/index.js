@@ -53,16 +53,32 @@ app.use("/api/clientsubs", clientSubsRouter);
 app.use("/api/expenses", expenseRouter);
 app.use("/api/attendance", attendanceRouter);
 
-const { populateMissingQRCodes } = require("./utils/migration");
+//const { populateMissingQRCodes } = require("./utils/migration");
 
 // Global Error Handler
 app.use(errorHandler);
 
-db.sequelize.sync().then(async () => {
-  // Run migration to populate missing QR codes for existing clients
-  await populateMissingQRCodes();
-  
-  app.listen(PORT, () => {
-    console.log(`Server is running at http://localhost:${PORT}`);
+//generate table for the first time and start the server
+// db.sequelize.sync().then(async () => {
+//   // Run migration to populate missing QR codes for existing clients
+//   //await populateMissingQRCodes();
+
+//   app.listen(PORT, () => {
+//     console.log(`Server is running at http://localhost:${PORT}`);
+//   });
+// });
+
+//run the server only if the database connection is successful
+db.sequelize
+  .authenticate()
+  .then(() => {
+    console.log("Connection has been established successfully.");
+
+    // Start the server
+    app.listen(PORT, () => {
+      console.log(`Server is running at http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Unable to connect to the database:", err);
   });
-});

@@ -17,10 +17,10 @@
 }
 
 @media print {
-  .no-print, 
-  .breadcrumb, 
-  .navbar, 
-  footer, 
+  .no-print,
+  .breadcrumb,
+  .navbar,
+  footer,
   .banner,
   button:not(.print-only) {
     display: none !important;
@@ -40,5 +40,43 @@
 
   .bg-white {
     background-color: white !important;
+  }
+
+  /* Force the content to take up as much height as it needs */
+  html,
+  body,
+  #root,
+  .App,
+  main {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Target the specific report container */
+  [ref="reportRef"],
+  .p-4.bg-white {
+    overflow: visible !important;
+    height: auto !important;
+    position: static !important; /* Avoid absolute/relative clipping */
+  }
+
+  /* Bootstrap specific: Fixes table responsiveness clipping */
+  .table-responsive {
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  table {
+    page-break-inside: auto;
+    width: 100% !important;
+  }
+
+  tr {
+    page-break-inside: avoid; /* Prevents a row from splitting across pages */
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group; /* Repeats the table header on every printed page */
   }
 }

@@ -33,7 +33,7 @@ router.get("/", async (req, res, next) => {
     //create a variable to get the current date
     const currentDate = new Date();
     const today = format(currentDate, "yyyy-MM-dd");
-    console.log(today);
+    // console.log(today);
     //perform a query to clientSubscription
     const clientSubs = await ClientSubscription.findAll({
       attributes: ["ClientInfoId", "dateend"],
@@ -58,7 +58,7 @@ router.get("/", async (req, res, next) => {
       };
     });
 
-    console.log("ClientData", clientData);
+    // console.log("ClientData", clientData);
 
     // //let activeClientsID = [];
     // const clientData = clientList.map((client) => {
@@ -83,7 +83,7 @@ router.get("/", async (req, res, next) => {
         client.pic = `${protocol}://${host}/uploads/${client.pic}`;
       return client;
     });
-    console.log(updatedClientList);
+    // console.log(updatedClientList);
     res.status(200).json(updatedClientList);
   } catch (error) {
     next(error);
@@ -92,9 +92,9 @@ router.get("/", async (req, res, next) => {
 
 //create new client
 router.post("/new", (req, res, next) => {
-  console.log(req);
+  // console.log(req);
   const upload = req.upload.single("pic");
-  console.log(upload);
+  // console.log(upload);
   upload(req, res, async (err) => {
     if (err) {
       return next(err);
@@ -103,7 +103,7 @@ router.post("/new", (req, res, next) => {
       ...req.body,
       pic: req.file ? req.file.path : `default.jpg`, // Use uploaded file or default
     };
-    console.log(clientData);
+    // console.log(clientData);
     // console.log(req.file);
     try {
       const {
@@ -118,8 +118,8 @@ router.post("/new", (req, res, next) => {
         emergencyContact,
       } = clientData;
       const photo = req.file ? req.file.filename : "default.jpg";
-      console.log(photo);
-      
+      // console.log(photo);
+
       // Generate unique 10-digit QR code
       const qrCode = await generateUniqueQRCode();
 
@@ -136,7 +136,7 @@ router.post("/new", (req, res, next) => {
         isMember: false,
         qrCode: qrCode,
       });
-      console.log(client);
+      // console.log(client);
       //save the emergency contact
       await EmergencyContact.create({
         name: emergencyName,
@@ -189,7 +189,7 @@ router.put("/update/:id", (req, res, next) => {
           sex: sex,
           pic: photo,
         },
-        { where: { id: id } }
+        { where: { id: id } },
       );
       //update client emercontact
       await EmergencyContact.update(
@@ -197,9 +197,11 @@ router.put("/update/:id", (req, res, next) => {
           name: ename,
           contact: econtact,
         },
-        { where: { ClientInfoId: id } }
+        { where: { ClientInfoId: id } },
       );
-      res.status(201).send({ message: `Successfully updated client information` });
+      res
+        .status(201)
+        .send({ message: `Successfully updated client information` });
     } catch (error) {
       next(error);
     }

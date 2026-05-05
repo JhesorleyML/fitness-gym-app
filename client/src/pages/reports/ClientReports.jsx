@@ -52,13 +52,13 @@ const ClientReports = () => {
 
   const handlePrint = useReactToPrint({
     contentRef: reportRef,
-    onBeforeGetContent: () => {
-      setShowAllPages(true);
-      return new Promise((resolve) => {
-        setTimeout(resolve, 500);
-      });
-    },
-    onAfterPrint: () => setShowAllPages(false),
+    // onBeforeGetContent: () => {
+    //   setShowAllPages(true);
+    //   return new Promise((resolve) => {
+    //     setTimeout(resolve, 500);
+    //   });
+    // },
+    // onAfterPrint: () => setShowAllPages(false),
   });
 
   if (isError)
@@ -111,7 +111,59 @@ const ClientReports = () => {
         </Col>
       </Row>
 
-      {isLoading ? (
+      {/* --- VISIBLE UI (Paginated for the user) --- */}
+      {!isLoading && (
+        <div className="no-print">
+          <div className="text-center mb-4">
+            <h1 className="fw-bold">BENFORD FITNESS GYM</h1>
+            <h3 className="text-muted">Client Reports</h3>
+            <h5 className="text-secondary">
+              {isMember
+                ? `List of Gym Clients with Memberships`
+                : `List of Gym Clients without Memberships`}
+            </h5>
+            <hr />
+          </div>
+
+          <div className="mb-2 fw-bold">
+            No. of Records: {filteredClients.length}
+          </div>
+          <ClientTable
+            listOfClients={filteredClients}
+            isReport={true}
+            showAllPages={showAllPages}
+            isSubList={isActive}
+          />
+        </div>
+      )}
+
+      {/* --- PRINT-ONLY UI (Hidden from screen, but available for the print hook) --- */}
+      <div style={{ display: "none" }}>
+        <div ref={reportRef} className="p-4 bg-white">
+          <div className="text-center mb-4">
+            <h1 className="fw-bold">BENFORD FITNESS GYM</h1>
+            <h3 className="text-muted">Client Reports</h3>
+            <h5 className="text-secondary">
+              {isMember
+                ? `List of Gym Clients with Memberships`
+                : `List of Gym Clients without Memberships`}
+            </h5>
+            <hr />
+          </div>
+
+          <div className="mb-2 fw-bold">
+            No. of Records: {filteredClients.length}
+          </div>
+          <ClientTable
+            listOfClients={filteredClients}
+            isReport={true}
+            showAllPages={true}
+            isSubList={isActive}
+          />
+        </div>
+      </div>
+      <div>
+        {/* {isLoading ? (
         <div className="text-center p-5">
           <Spinner animation="border" variant="primary" />
         </div>
@@ -138,7 +190,8 @@ const ClientReports = () => {
             isSubList={isActive}
           />
         </div>
-      )}
+      )} */}
+      </div>
     </Container>
   );
 };

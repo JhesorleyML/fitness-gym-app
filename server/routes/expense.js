@@ -40,13 +40,15 @@ router.get("/", async (req, res, next) => {
         "category",
         "image",
       ],
-      where: search ? {
-        [Op.or]: [
-          { title: { [Op.like]: `%${search}%` } },
-          { description: { [Op.like]: `%${search}%` } },
-          { category: { [Op.like]: `%${search}%` } },
-        ]
-      } : null,
+      where: search
+        ? {
+            [Op.or]: [
+              { title: { [Op.like]: `%${search}%` } },
+              { description: { [Op.like]: `%${search}%` } },
+              { category: { [Op.like]: `%${search}%` } },
+            ],
+          }
+        : null,
       include: { model: User, attributes: ["fullname"] },
       order: [["expdate", "DESC"]],
       limit: limit,
@@ -100,9 +102,9 @@ router.get("/:userId", async (req, res, next) => {
 
 //add new expense
 router.post("/new", (req, res, next) => {
-  console.log(req);
+  // console.log(req);
   const upload = req.upload.single("pic");
-  console.log("upload:", upload);
+  // console.log("upload:", upload);
   upload(req, res, async (err) => {
     if (err) {
       return next(err);
@@ -111,8 +113,8 @@ router.post("/new", (req, res, next) => {
       ...req.body,
       pic: req.file ? req.file.path : "default.jpg",
     };
-    console.log("req.file", req.file);
-    console.log(expenseData);
+    // console.log("req.file", req.file);
+    // console.log(expenseData);
     //insert to database
     try {
       const { title, expdate, amount, category, description } = expenseData;

@@ -38,7 +38,9 @@ const NewPaymentModal = ({ show, handleClose, userId }) => {
       axios.get("/api/clients/").then((res) =>
         res.data.map((c) => ({
           id: c.id,
-          fullname: `${c.firstname} ${c.middlename} ${c.lastname}`,
+          fullname:
+            `${c.lastname}, ${c.firstname} ${c.middlename ? c.middlename.charAt(0) + "." : ""}`.trim(),
+          // fullname: `${c.firstname} ${c.middlename} ${c.lastname}`,
         })),
       ),
     enabled: show, // Only fetch when modal is open

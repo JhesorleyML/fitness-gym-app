@@ -21,7 +21,7 @@ import { useQuery } from "@tanstack/react-query";
 
 const Payment = ({ userId }) => {
   let navigate = useNavigate();
-  
+
   // Pagination and Search states
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(10);
@@ -35,22 +35,27 @@ const Payment = ({ userId }) => {
   // Use TanStack Query
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["payments", currentPage, searchKey, limit],
-    queryFn: () => 
-      axios.get(`/api/payments?page=${currentPage}&limit=${limit}&search=${searchKey}`)
-        .then(res => res.data),
+    queryFn: () =>
+      axios
+        .get(
+          `/api/payments?page=${currentPage}&limit=${limit}&search=${searchKey}`,
+        )
+        .then((res) => res.data),
   });
 
   // format data to be displayed
-  const formattedPayments = data?.payments.map((paymentData) => {
-    const { firstname, middlename, lastname } =
-      paymentData.ClientSubscription.ClientInfo;
-    const fullname = `${firstname} ${middlename} ${lastname} `;
-    const formattedDate = format(
-      new Date(paymentData.paymentdate),
-      "MM/dd/yyyy",
-    );
-    return { ...paymentData, fullname, formattedDate };
-  }) || [];
+  const formattedPayments =
+    data?.payments.map((paymentData) => {
+      const { firstname, middlename, lastname } =
+        paymentData.ClientSubscription.ClientInfo;
+      const fullname = `${firstname} ${middlename ? middlename.charAt(0) + "." : ""} ${lastname} `;
+      // console.log(fullname);
+      const formattedDate = format(
+        new Date(paymentData.paymentdate),
+        "MM/dd/yyyy",
+      );
+      return { ...paymentData, fullname, formattedDate };
+    }) || [];
 
   const totalPages = data?.totalPages || 0;
 
@@ -73,7 +78,10 @@ const Payment = ({ userId }) => {
     setCurrentPage(pageNumber);
   };
 
-  if (isError) return <div className="text-center text-danger p-5">Error: {error.message}</div>;
+  if (isError)
+    return (
+      <div className="text-center text-danger p-5">Error: {error.message}</div>
+    );
 
   return (
     <Container>

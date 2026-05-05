@@ -89,7 +89,7 @@ router.post("/new", async (req, res, next) => {
     const dateend =
       parseInt(duration) === 0 ? null : startDate.toISOString().split("T")[0];
     //create new record
-    console.log(dateend);
+    // console.log(dateend);
     const newClientSub = await ClientSubscription.create({
       datestart: datestart,
       dateend: dateend,
@@ -98,7 +98,7 @@ router.post("/new", async (req, res, next) => {
     });
     if (newClientSub) {
       //create new Payment
-      console.log(newClientSub.id, "PaymentDate: ", paymentdate);
+      // console.log(newClientSub.id, "PaymentDate: ", paymentdate);
       const payment = await Payment.create({
         amount: amount,
         UserId: userId,
@@ -113,7 +113,7 @@ router.post("/new", async (req, res, next) => {
             where: { id: clientId },
           },
         );
-        console.log(upd);
+        // console.log(upd);
       }
     }
     //return success message

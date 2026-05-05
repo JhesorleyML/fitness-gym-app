@@ -7,7 +7,6 @@ import {
   Form,
   InputGroup,
   Row,
-  Spinner,
 } from "react-bootstrap";
 import axios from "axios";
 import PaymentTable from "../payment/PaymentTable";
@@ -53,7 +52,7 @@ const PaymentReports = () => {
     return rawPayments.map((paymentData) => {
       const { firstname, middlename, lastname } =
         paymentData.ClientSubscription.ClientInfo;
-      const fullname = `${firstname} ${middlename} ${lastname}`;
+      const fullname = `${firstname} ${middlename ? middlename.charAt(0) + "." : ""} ${lastname}`;
       const formattedDate = format(
         new Date(paymentData.paymentdate),
         "MM/dd/yyyy",
@@ -139,13 +138,13 @@ const PaymentReports = () => {
 
   const handlePrint = useReactToPrint({
     contentRef: reportRef,
-    onBeforeGetContent: () => {
-      setShowAllPages(true);
-      return new Promise((resolve) => {
-        setTimeout(resolve, 500); // Wait for pagination to expand
-      });
-    },
-    onAfterPrint: () => setShowAllPages(false),
+    // onBeforeGetContent: () => {
+    //   setShowAllPages(true);
+    //   return new Promise((resolve) => {
+    //     setTimeout(resolve, 2000); // Wait for pagination to expand
+    //   });
+    // },
+    // onAfterPrint: () => setShowAllPages(false),
   });
 
   if (isError)
@@ -216,6 +215,7 @@ const PaymentReports = () => {
                 value={filterYear}
                 onChange={(e) => setFilterYear(e.target.value)}
               >
+                <option value="2027">2027</option>
                 <option value="2026">2026</option>
                 <option value="2025">2025</option>
                 <option value="2024">2024</option>
@@ -225,6 +225,7 @@ const PaymentReports = () => {
                 <option value="2020">2020</option>
                 <option value="2019">2019</option>
                 <option value="2018">2018</option>
+                <option value="2017">2017</option>
               </Form.Select>
             </InputGroup>
           )}
@@ -242,7 +243,83 @@ const PaymentReports = () => {
         </Col>
       </Row>
 
-      {isLoading ? (
+      {/* --- VISIBLE UI (Paginated for the user) --- */}
+      {!isLoading && (
+        <div className="no-print">
+          <div className="text-center mb-4">
+            <h1 className="fw-bold">BENFORD FITNESS GYM</h1>
+            <h3 className="text-muted">Payment Reports</h3>
+            {filterType === "3" && (
+              <h6>
+                Range: {format(dateFrom, "MMMM d, yyyy")} to{" "}
+                {format(dateTo, "MMMM d, yyyy")}
+              </h6>
+            )}
+            {filterType === "4" && <h6>Year: {filterYear}</h6>}
+            <hr />
+          </div>
+          <Row className="mb-3 fw-bold">
+            <Col>
+              No. of Records:{" "}
+              {filterType === "4"
+                ? monthlyData.length
+                : filteredPayments.length}
+            </Col>
+            <Col className="text-end text-primary">Total: {totalAmount}</Col>
+          </Row>
+          {filterType === "4" ? (
+            <MonthlyReportTable data={monthlyData} />
+          ) : (
+            <PaymentTable
+              listOfPayments={filteredPayments}
+              showAllPages={showAllPages}
+              isReport={true}
+            />
+          )}
+        </div>
+      )}
+
+      {/* --- PRINT-ONLY UI (Hidden from screen, but available for the print hook) --- */}
+      <div style={{ display: "none" }}>
+        <div ref={reportRef} className="p-4 bg-white">
+          <div className="text-center mb-4">
+            <h1 className="fw-bold">BENFORD FITNESS GYM</h1>
+            <h3 className="text-muted">Payment Reports</h3>
+            {/* ... (Your existing filter info: Range, Year, etc.) ... */}
+            {filterType === "3" && (
+              <h6>
+                Range: {format(dateFrom, "MMMM d, yyyy")} to{" "}
+                {format(dateTo, "MMMM d, yyyy")}
+              </h6>
+            )}
+            {filterType === "4" && <h6>Year: {filterYear}</h6>}
+            <hr />
+          </div>
+
+          <Row className="mb-3 fw-bold">
+            <Col>
+              No. of Records:{" "}
+              {filterType === "4"
+                ? monthlyData.length
+                : filteredPayments.length}
+            </Col>
+            <Col className="text-end text-primary">Total: {totalAmount}</Col>
+          </Row>
+
+          {filterType === "4" ? (
+            <MonthlyReportTable data={monthlyData} />
+          ) : (
+            <PaymentTable
+              listOfPayments={filteredPayments}
+              showAllPages={true} // ALWAYS true for the printer
+              isReport={true}
+            />
+          )}
+        </div>
+      </div>
+      <div>
+        {/* Temporary comment for fixing */}
+        {/* {isLoading ? (
         <div className="text-center p-5">
           <Spinner animation="border" variant="primary" />
         </div>
@@ -281,7 +358,8 @@ const PaymentReports = () => {
             />
           )}
         </div>
-      )}
+      )} */}
+      </div>
     </Container>
   );
 };

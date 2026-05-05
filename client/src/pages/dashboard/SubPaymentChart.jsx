@@ -89,7 +89,9 @@ const SubPaymentChart = ({ tableData }) => {
   };
   return (
     <Card className="p-3">
-      <Card.Header as="h5">Subscription Payments</Card.Header>
+      <Card.Header as="h5">
+        Gym Membership and Subscription Payments
+      </Card.Header>
       <Card.Body>
         <div style={{ height: "250px" }}>
           <Bar options={chartOptions} data={chartData} />
